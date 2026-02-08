@@ -19,14 +19,9 @@ internal actor CLIProcess {
     private var stdoutPipe: Pipe?
     private var stderrPipe: Pipe?
     private var stderrData: Data = Data()
+    private var exitContinuations: [CheckedContinuation<Int32, Never>] = []
 
     /// Start the CLI process.
-    ///
-    /// - Parameters:
-    ///   - executable: Path to the JS runtime (e.g., /usr/bin/node)
-    ///   - arguments: CLI arguments including the cli.js path
-    ///   - environment: Environment variables
-    ///   - cwd: Working directory
     func start(
         executable: URL,
         arguments: [String],
@@ -98,7 +93,7 @@ internal actor CLIProcess {
         pipe.fileHandleForWriting.write(data)
     }
 
-    /// Close stdin pipe. Useful for signaling EOF to processes like cat.
+    /// Close stdin pipe.
     func closeStdin() throws {
         guard let pipe = stdinPipe else {
             throw AgentSDKError.notConnected
@@ -107,23 +102,24 @@ internal actor CLIProcess {
     }
 
     /// Return an async stream of stdout lines (newline-delimited Data).
-    func stdoutStream() -> AsyncThrowingStream<Data, Error> {
-        guard let pipe = stdoutPipe else {
-            return AsyncThrowingStream { $0.finish(throwing: AgentSDKError.notConnected) }
-        }
+    nonisolated func stdoutStream() -> AsyncThrowingStream<Data, Error> {
+        // We create the stream and read from the pipe on a detached task
+        // to avoid blocking the actor.
+        return AsyncThrowingStream { [weak self] continuation in
+            Task.detached { [weak self] in
+                guard let pipe = await self?.stdoutPipe else {
+                    continuation.finish(throwing: AgentSDKError.notConnected)
+                    return
+                }
 
-        let fileHandle = pipe.fileHandleForReading
-
-        return AsyncThrowingStream { continuation in
-            // Read stdout line by line
-            Task {
+                let fileHandle = pipe.fileHandleForReading
                 var buffer = Data()
-                let newline = UInt8(0x0A) // '\n'
+                let newline = UInt8(0x0A)
 
                 while true {
+                    // This blocks the detached thread, not the actor
                     let chunk = fileHandle.availableData
                     if chunk.isEmpty {
-                        // EOF - yield remaining buffer if non-empty
                         if !buffer.isEmpty {
                             continuation.yield(buffer)
                         }
@@ -133,7 +129,6 @@ internal actor CLIProcess {
 
                     buffer.append(chunk)
 
-                    // Split by newlines
                     while let newlineIndex = buffer.firstIndex(of: newline) {
                         let line = buffer[buffer.startIndex...newlineIndex]
                         continuation.yield(Data(line))
@@ -155,8 +150,7 @@ internal actor CLIProcess {
         state = .terminating
         proc.terminate() // SIGTERM
 
-        // Wait up to 5 seconds, then SIGKILL
-        Task {
+        Task.detached {
             try? await Task.sleep(for: .seconds(5))
             if proc.isRunning {
                 kill(proc.processIdentifier, SIGKILL)
@@ -164,11 +158,17 @@ internal actor CLIProcess {
         }
     }
 
-    /// Wait for process exit and return exit code.
+    /// Wait for process exit and return exit code (non-blocking on actor).
     func waitForExit() async -> Int32 {
-        guard let proc = process else { return -1 }
-        proc.waitUntilExit()
-        return proc.terminationStatus
+        switch state {
+        case .terminated(let code):
+            return code
+        default:
+            break
+        }
+        return await withCheckedContinuation { continuation in
+            exitContinuations.append(continuation)
+        }
     }
 
     // MARK: - Private
@@ -178,12 +178,13 @@ internal actor CLIProcess {
     }
 
     private func handleTermination(exitCode: Int32) {
-        if case .terminating = state {
-            state = .terminated(exitCode: exitCode)
-        } else {
-            state = .terminated(exitCode: exitCode)
-        }
-        // Clean up
+        state = .terminated(exitCode: exitCode)
         stderrPipe?.fileHandleForReading.readabilityHandler = nil
+        // Resume all waiters
+        let continuations = exitContinuations
+        exitContinuations.removeAll()
+        for cont in continuations {
+            cont.resume(returning: exitCode)
+        }
     }
 }

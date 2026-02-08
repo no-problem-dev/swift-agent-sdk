@@ -102,7 +102,7 @@ struct CLIProcessTests {
         #expect(stderr.contains("error message"))
     }
 
-    @Test("terminate process")
+    @Test("terminate process", .timeLimit(.minutes(1)))
     func terminateProcess() async throws {
         let cliProcess = CLIProcess()
 
