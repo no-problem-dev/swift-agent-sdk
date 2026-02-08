@@ -18,12 +18,12 @@ references:
 | T3 | Configure Infrastructure Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
 | T4 | Configure Presentation Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
 | T5 | Implement App エントリポイント + 統合ビルド | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
-| T6 | Implement Domain エンティティ | pending | - | - |
-| T7 | Implement Domain 値オブジェクト + イベント型 | pending | - | - |
-| T8 | Test Domain エンティティ Unit Test | pending | - | - |
-| T9 | Implement Domain プロトコル | pending | - | - |
-| T10 | Implement Domain AppError | pending | - | - |
-| T11 | Test Domain 総合テスト + クリーンアップ | pending | - | - |
+| T6 | Implement Domain エンティティ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T7 | Implement Domain 値オブジェクト + イベント型 | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T8 | Test Domain エンティティ Unit Test | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T9 | Implement Domain プロトコル | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T10 | Implement Domain AppError | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T11 | Test Domain 総合テスト + クリーンアップ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T12 | Implement AgentMessageMapper | pending | - | - |
 | T13 | Implement AgentService 骨格 | pending | - | - |
 | T14 | Implement JSONSessionStore | pending | - | - |
@@ -46,11 +46,11 @@ references:
 | Phase | 完了タスク | 全タスク | 進捗率 |
 |-------|----------|---------|--------|
 | Phase 1 | 5 | 5 | 100% |
-| Phase 2 | 0 | 6 | 0% |
+| Phase 2 | 6 | 6 | 100% |
 | Phase 3 | 0 | 5 | 0% |
 | Phase 4 | 0 | 8 | 0% |
 | Phase 5 | 0 | 3 | 0% |
-| **合計** | **5** | **27** | **19%** |
+| **合計** | **11** | **27** | **41%** |
 
 ## ブランチ戦略
 
@@ -80,3 +80,4 @@ references:
 |------|---------|
 | 2026-02-08 | 初版作成 |
 | 2026-02-08 | Phase 1 (T1-T5) 完了 |
+| 2026-02-08 | Phase 2 (T6-T11) 完了 |

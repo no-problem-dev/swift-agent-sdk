@@ -39,3 +39,37 @@ tags: [implementation-log, claude-agent]
 - **ブランチ**: feat/p1-w1-project-setup
 - **概要**: ClaudeAgentApp.swift エントリポイント作成、xcodegen + xcodebuild 成功
 - **検証**: `xcodegen generate` + `xcodebuild build` 成功
+
+## Phase 2: Domain パッケージ実装
+
+### T6: Implement Domain エンティティ
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: ChatMessage, ContentItem, ToolUseItem, ToolResultItem, SessionConfig, SessionData, TokenUsage
+- **検証**: 全型 Sendable + Codable、コンパイル成功
+
+### T7: Implement Domain 値オブジェクト + イベント型
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: ModelSelection (CaseIterable + displayName), SessionStatus, AgentEvent (4 cases)
+
+### T8: Test Domain エンティティ Unit Test
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: ChatMessage, ContentItem, SessionData, ModelSelection のテスト
+
+### T9: Implement Domain プロトコル
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: AgentServiceProtocol, SessionStoreProtocol (both Sendable)
+
+### T10: Implement Domain AppError
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: AppError enum (7 cases, LocalizedError)
+
+### T11: Test Domain 総合テスト + クリーンアップ
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p2-domain
+- **概要**: AgentEvent, AppError テスト追加、Placeholder 削除
+- **検証**: 28 tests in 6 suites, all passing, zero warnings
