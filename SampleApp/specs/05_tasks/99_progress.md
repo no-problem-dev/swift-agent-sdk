@@ -24,11 +24,11 @@ references:
 | T9 | Implement Domain プロトコル | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T10 | Implement Domain AppError | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T11 | Test Domain 総合テスト + クリーンアップ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
-| T12 | Implement AgentMessageMapper | done | feat/p3-infrastructure | - |
-| T13 | Implement AgentService 骨格 | done | feat/p3-infrastructure | - |
-| T14 | Implement JSONSessionStore | done | feat/p3-infrastructure | - |
-| T15 | Implement AgentService 完全実装 | done | feat/p3-infrastructure | - |
-| T16 | Test AgentService Integration Test | done | feat/p3-infrastructure | - |
+| T12 | Implement AgentMessageMapper | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
+| T13 | Implement AgentService 骨格 | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
+| T14 | Implement JSONSessionStore | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
+| T15 | Implement AgentService 完全実装 | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
+| T16 | Test AgentService Integration Test | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
 | T17 | Implement AppState + SessionState 骨格 | pending | - | - |
 | T18 | Create ContentView + EmptySessionView | pending | - | - |
 | T19 | Create SessionSidebar + SessionRow + StatusBadge | pending | - | - |
