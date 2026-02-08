@@ -134,6 +134,9 @@ public final class AgentService: AgentServiceProtocol, @unchecked Sendable {
     }
 
     /// CLIArgBuilder と同等の引数構築（SDK の CLIArgBuilder は internal のため再実装）
+    ///
+    /// SDK v2.x では CLIArgBuilder に `-p` フラグが含まれるため、
+    /// ここでは追加オプションのみ構築する。
     private static func buildArguments(
         from options: SessionOptions,
         resumeSessionId: String? = nil
@@ -141,7 +144,6 @@ public final class AgentService: AgentServiceProtocol, @unchecked Sendable {
         var args: [String] = []
 
         // 必須引数: 非インタラクティブモード + JSONL ストリーム
-        // ネイティブ CLI は --print なしでは --output-format/--input-format が無効
         args.append("-p")
         args.append(contentsOf: ["--output-format", "stream-json"])
         args.append(contentsOf: ["--input-format", "stream-json"])

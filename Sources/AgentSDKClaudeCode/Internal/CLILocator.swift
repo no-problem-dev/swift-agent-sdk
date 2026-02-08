@@ -67,6 +67,20 @@ internal struct CLILocator: Sendable {
             }
         }
 
+        // 4.5. Native install paths
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let nativePaths = [
+            (home as NSString).appendingPathComponent(".local/bin/claude"),
+            (home as NSString).appendingPathComponent(".claude/local/claude"),
+            "/usr/local/bin/claude",
+        ]
+        for nativePath in nativePaths {
+            searchedPaths.append(nativePath)
+            if FileManager.default.fileExists(atPath: nativePath) {
+                return URL(fileURLWithPath: nativePath)
+            }
+        }
+
         // 5. System PATH (which claude)
         if let whichPath = Self.whichClaude() {
             searchedPaths.append(whichPath)

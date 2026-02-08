@@ -3,13 +3,13 @@ import AgentSDK
 
 /// Raw JSONL message received from CLI. Internal type.
 internal enum CLIMessage: Sendable {
-    case initializeReady
     case system(CLISystemMessage)
     case assistant(CLIAssistantMessage)
     case partialAssistant(CLIPartialAssistantMessage)
     case result(CLIResultMessage)
     case controlRequest(CLIControlRequest)
     case controlResponse(CLIControlResponse)
+    case streamEvent(CLIStreamEvent)
     case unknown(type: String)
 }
 
@@ -18,11 +18,14 @@ internal struct CLISystemMessage: Sendable, Codable {
     let tools: [JSONValue]
     let model: String
     let mcpServers: [JSONValue]
+    let subtype: String?
+    let uuid: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case tools, model
         case mcpServers = "mcp_servers"
+        case subtype, uuid
     }
 }
 
@@ -46,21 +49,36 @@ internal struct CLIPartialAssistantMessage: Sendable, Codable {
 
 internal struct CLIResultMessage: Sendable, Codable {
     let result: String
-    let costUsd: Double
+    let totalCostUsd: Double
     let durationMs: Int
-    let inputTokens: Int
-    let outputTokens: Int
+    let usage: Usage
     let sessionId: String
     let numTurns: Int
+    let subtype: String?
+    let uuid: String?
+    let isError: Bool?
+    let durationApiMs: Int?
+
+    struct Usage: Sendable, Codable {
+        let inputTokens: Int
+        let outputTokens: Int
+
+        enum CodingKeys: String, CodingKey {
+            case inputTokens = "input_tokens"
+            case outputTokens = "output_tokens"
+        }
+    }
 
     enum CodingKeys: String, CodingKey {
         case result
-        case costUsd = "cost_usd"
+        case totalCostUsd = "total_cost_usd"
         case durationMs = "duration_ms"
-        case inputTokens = "input_tokens"
-        case outputTokens = "output_tokens"
+        case usage
         case sessionId = "session_id"
         case numTurns = "num_turns"
+        case subtype, uuid
+        case isError = "is_error"
+        case durationApiMs = "duration_api_ms"
     }
 }
 
@@ -102,6 +120,10 @@ internal struct CLIControlResponse: Sendable, Codable {
     }
 }
 
+internal struct CLIStreamEvent: Sendable, Codable {
+    let event: JSONValue
+}
+
 extension CLIMessage: Decodable {
     private enum CodingKeys: String, CodingKey {
         case type, subtype
@@ -112,8 +134,6 @@ extension CLIMessage: Decodable {
         let type = try container.decode(String.self, forKey: .type)
 
         switch type {
-        case "initialize_ready":
-            self = .initializeReady
         case "system":
             self = .system(try CLISystemMessage(from: decoder))
         case "assistant":
@@ -129,6 +149,8 @@ extension CLIMessage: Decodable {
             self = .controlRequest(try CLIControlRequest(from: decoder))
         case "control_response":
             self = .controlResponse(try CLIControlResponse(from: decoder))
+        case "stream_event":
+            self = .streamEvent(try CLIStreamEvent(from: decoder))
         default:
             self = .unknown(type: type)
         }

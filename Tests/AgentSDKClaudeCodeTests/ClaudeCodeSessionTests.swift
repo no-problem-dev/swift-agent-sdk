@@ -20,11 +20,31 @@ struct ClaudeCodeSessionTests {
 
     // MARK: - Session ID
 
-    @Test("Session created via client has correct session ID")
+    @Test("Session ID is updated from system message on first send")
     func testSessionId() async throws {
-        let (session, _) = try await createMockSession(sessionId: "test_session_42")
-        let sessionId = await session.id
-        #expect(sessionId == "test_session_42")
+        let (session, transport) = try await createMockSession(sessionId: "test_session_42")
+
+        // Before first send, session ID is a generated UUID
+        let initialId = await session.id
+        #expect(!initialId.isEmpty)
+
+        Task {
+            try await Task.sleep(for: .milliseconds(50))
+            // System message provides the real CLI session ID
+            transport.yield("""
+            {"type":"system","session_id":"test_session_42","tools":[],"model":"m","mcp_servers":[]}
+            """)
+            transport.yield("""
+            {"type":"result","result":"done","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"test_session_42","num_turns":0}
+            """)
+        }
+
+        for try await _ in session.send("Hello") {}
+
+        // After first send, session ID is updated to CLI's real session ID
+        let updatedId = await session.id
+        #expect(updatedId == "test_session_42")
+
         try await session.close()
     }
 
@@ -40,7 +60,7 @@ struct ClaudeCodeSessionTests {
             {"type":"assistant","message":{"content":[{"type":"text","text":"Response"}]},"parent_tool_use_id":null}
             """)
             transport.yield("""
-            {"type":"result","result":"done","cost_usd":0.01,"duration_ms":100,"input_tokens":10,"output_tokens":5,"session_id":"sess","num_turns":1}
+            {"type":"result","result":"done","total_cost_usd":0.01,"duration_ms":100,"usage":{"input_tokens":10,"output_tokens":5},"session_id":"sess","num_turns":1}
             """)
         }
 
@@ -67,28 +87,33 @@ struct ClaudeCodeSessionTests {
         try await session.close()
     }
 
-    @Test("Session send writes user_message to transport")
+    @Test("Session send writes user message to transport")
     func testSendWritesUserMessage() async throws {
         let (session, transport) = try await createMockSession(sessionId: "sess")
 
         Task {
             try await Task.sleep(for: .milliseconds(50))
             transport.yield("""
-            {"type":"result","result":"","cost_usd":0,"duration_ms":0,"input_tokens":0,"output_tokens":0,"session_id":"sess","num_turns":0}
+            {"type":"result","result":"","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"sess","num_turns":0}
             """)
         }
 
         for try await _ in session.send("My question") {}
 
-        // Find the user_message write (skip any that happened during session creation)
+        // Find the user message write (skip any that happened during session creation)
         let written = transport.writtenData
         let userMessages = written.compactMap { data -> [String: Any]? in
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  json["type"] as? String == "user_message" else { return nil }
+                  json["type"] as? String == "user" else { return nil }
             return json
         }
         #expect(userMessages.count >= 1)
-        #expect(userMessages.last?["content"] as? String == "My question")
+        if let messageBody = userMessages.last?["message"] as? [String: Any],
+           let content = messageBody["content"] as? [[String: Any]] {
+            #expect(content[0]["text"] as? String == "My question")
+        } else {
+            Issue.record("Expected message.content[0].text")
+        }
 
         try await session.close()
     }
@@ -104,7 +129,7 @@ struct ClaudeCodeSessionTests {
             {"type":"assistant","message":{"content":[{"type":"text","text":"First response"}]},"parent_tool_use_id":null}
             """)
             transport.yield("""
-            {"type":"result","result":"first","cost_usd":0.01,"duration_ms":100,"input_tokens":10,"output_tokens":5,"session_id":"sess","num_turns":1}
+            {"type":"result","result":"first","total_cost_usd":0.01,"duration_ms":100,"usage":{"input_tokens":10,"output_tokens":5},"session_id":"sess","num_turns":1}
             """)
         }
 
@@ -121,7 +146,7 @@ struct ClaudeCodeSessionTests {
             {"type":"assistant","message":{"content":[{"type":"text","text":"Second response"}]},"parent_tool_use_id":null}
             """)
             transport.yield("""
-            {"type":"result","result":"second","cost_usd":0.02,"duration_ms":200,"input_tokens":20,"output_tokens":10,"session_id":"sess","num_turns":2}
+            {"type":"result","result":"second","total_cost_usd":0.02,"duration_ms":200,"usage":{"input_tokens":20,"output_tokens":10},"session_id":"sess","num_turns":2}
             """)
         }
 
@@ -179,7 +204,7 @@ struct ClaudeCodeSessionTests {
             {"type":"assistant","message":{"content":[{"type":"text","text":"Sub-agent response"}]},"parent_tool_use_id":"toolu_sub_001"}
             """)
             transport.yield("""
-            {"type":"result","result":"done","cost_usd":0.03,"duration_ms":300,"input_tokens":30,"output_tokens":15,"session_id":"sess","num_turns":3}
+            {"type":"result","result":"done","total_cost_usd":0.03,"duration_ms":300,"usage":{"input_tokens":30,"output_tokens":15},"session_id":"sess","num_turns":3}
             """)
         }
 
@@ -208,19 +233,16 @@ struct ClaudeCodeSessionTests {
     // MARK: - Helpers
 
     /// Create a session backed by MockTransport (no subprocess).
+    ///
+    /// CLI v2.x sends the system message only after the first user message,
+    /// so `createSession()` returns immediately with a generated UUID.
+    /// The `sessionId` parameter is unused here — tests that need to verify
+    /// the CLI session ID should yield a system message during `send()`.
     private func createMockSession(
         sessionId: String
     ) async throws -> (ClaudeCodeSession, MockTransport) {
         let transport = MockTransport()
         let client = ClaudeCodeClient(transport: transport)
-
-        Task {
-            try await Task.sleep(for: .milliseconds(50))
-            transport.yield("""
-            {"type":"system","session_id":"\(sessionId)","tools":[],"model":"m","mcp_servers":[]}
-            """)
-        }
-
         let session = try await client.createSession()
         return (session, transport)
     }

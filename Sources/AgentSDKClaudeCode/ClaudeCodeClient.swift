@@ -49,7 +49,7 @@ public struct ClaudeCodeClient<T: AgentTransport>: AgentClient {
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    // 1. Connect
+                    // 1. Connect (starts process, no handshake wait)
                     try await transport.connect()
 
                     // 2. Create MessageRouter
@@ -60,9 +60,12 @@ public struct ClaudeCodeClient<T: AgentTransport>: AgentClient {
                         write: writeFn,
                         canUseTool: options.canUseTool
                     )
+
+                    // 3. Create output stream BEFORE sending user message
+                    //    so messages are captured as soon as CLI responds
                     let messageStream = await router.makeStream()
 
-                    // 3. Start routing messages from transport
+                    // 4. Start routing messages from transport
                     let codec = JSONLCodec()
                     let routingTask = Task {
                         do {
@@ -76,11 +79,11 @@ public struct ClaudeCodeClient<T: AgentTransport>: AgentClient {
                         }
                     }
 
-                    // 4. Send user message
+                    // 5. Send user message (triggers CLI to output system + response)
                     let userMessage = try codec.encode(SDKMessage.userMessage(content: prompt))
                     try await transport.write(userMessage)
 
-                    // 5. Forward messages to the caller's continuation
+                    // 6. Forward messages to the caller's continuation
                     for try await msg in messageStream {
                         continuation.yield(msg)
                     }
@@ -101,14 +104,15 @@ public struct ClaudeCodeClient<T: AgentTransport>: AgentClient {
 
     /// Create a new interactive session.
     ///
-    /// Connects the transport and performs the handshake. Returns a session
-    /// that can send multiple messages over the same connection.
+    /// Connects the transport and starts message routing. The session is
+    /// returned immediately with a placeholder ID. The real CLI session ID
+    /// is captured from the system message on the first ``ClaudeCodeSession/send(_:)`` call.
     public func createSession(
         options: SessionOptions = SessionOptions()
     ) async throws -> ClaudeCodeSession {
         let transport = baseTransport
 
-        // Connect transport
+        // Connect transport (starts process, no handshake wait)
         try await transport.connect()
 
         // Create MessageRouter
@@ -134,18 +138,10 @@ public struct ClaudeCodeClient<T: AgentTransport>: AgentClient {
             }
         }
 
-        // Extract session ID from the first system message
-        let initialStream = await router.makeStream()
-        var sessionId = ""
-        for try await msg in initialStream {
-            if case .system(let info) = msg {
-                sessionId = info.sessionId
-                break
-            }
-        }
-
+        // Return session immediately — CLI v2.x sends system message
+        // only after the first user message, so we defer session ID extraction.
         return ClaudeCodeSession(
-            sessionId: sessionId,
+            sessionId: UUID().uuidString,
             transport: transport,
             router: router,
             routingTask: routingTask

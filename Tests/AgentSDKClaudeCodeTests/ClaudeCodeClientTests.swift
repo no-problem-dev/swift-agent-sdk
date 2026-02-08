@@ -37,7 +37,7 @@ struct ClaudeCodeClientTests {
             {"type":"assistant","message":{"content":[{"type":"text","text":"Hello!"}]},"parent_tool_use_id":null}
             """,
             """
-            {"type":"result","result":"done","cost_usd":0.01,"duration_ms":100,"input_tokens":10,"output_tokens":5,"session_id":"sess","num_turns":1}
+            {"type":"result","result":"done","total_cost_usd":0.01,"duration_ms":100,"usage":{"input_tokens":10,"output_tokens":5},"session_id":"sess","num_turns":1}
             """,
         ])
 
@@ -84,7 +84,7 @@ struct ClaudeCodeClientTests {
             {"type":"assistant","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_001","content":"hi","is_error":false}]},"parent_tool_use_id":null}
             """,
             """
-            {"type":"result","result":"hi","cost_usd":0.02,"duration_ms":200,"input_tokens":20,"output_tokens":10,"session_id":"sess","num_turns":2}
+            {"type":"result","result":"hi","total_cost_usd":0.02,"duration_ms":200,"usage":{"input_tokens":20,"output_tokens":10},"session_id":"sess","num_turns":2}
             """,
         ])
 
@@ -134,7 +134,7 @@ struct ClaudeCodeClientTests {
             {"type":"system","session_id":"sess","tools":[],"model":"m","mcp_servers":[]}
             """,
             """
-            {"type":"result","result":"","cost_usd":0,"duration_ms":0,"input_tokens":0,"output_tokens":0,"session_id":"sess","num_turns":0}
+            {"type":"result","result":"","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"sess","num_turns":0}
             """,
         ])
 
@@ -145,11 +145,22 @@ struct ClaudeCodeClientTests {
         // Should have at least 1 write (the user_message)
         #expect(written.count >= 1)
 
-        // The last write should be a user_message containing our prompt
+        // The last write should be a user message containing our prompt
         let lastWrite = written.last!
         let json = try JSONSerialization.jsonObject(with: lastWrite) as! [String: Any]
-        #expect(json["type"] as? String == "user_message")
-        #expect(json["content"] as? String == "Test prompt")
+        #expect(json["type"] as? String == "user")
+        if let messageBody = json["message"] as? [String: Any] {
+            #expect(messageBody["role"] as? String == "user")
+            if let content = messageBody["content"] as? [[String: Any]] {
+                #expect(content.count == 1)
+                #expect(content[0]["type"] as? String == "text")
+                #expect(content[0]["text"] as? String == "Test prompt")
+            } else {
+                Issue.record("Expected content array")
+            }
+        } else {
+            Issue.record("Expected message field")
+        }
     }
 
     @Test("query closes transport after completion")
@@ -159,7 +170,7 @@ struct ClaudeCodeClientTests {
             {"type":"system","session_id":"sess","tools":[],"model":"m","mcp_servers":[]}
             """,
             """
-            {"type":"result","result":"done","cost_usd":0,"duration_ms":0,"input_tokens":0,"output_tokens":0,"session_id":"sess","num_turns":0}
+            {"type":"result","result":"done","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"sess","num_turns":0}
             """,
         ])
 
@@ -202,7 +213,7 @@ struct ClaudeCodeClientTests {
             try await Task.sleep(for: .milliseconds(100))
             // Result to end the query
             transport.yield("""
-            {"type":"result","result":"done","cost_usd":0.01,"duration_ms":100,"input_tokens":10,"output_tokens":5,"session_id":"sess","num_turns":1}
+            {"type":"result","result":"done","total_cost_usd":0.01,"duration_ms":100,"usage":{"input_tokens":10,"output_tokens":5},"session_id":"sess","num_turns":1}
             """)
             transport.finishStream()
         }
@@ -245,7 +256,7 @@ struct ClaudeCodeClientTests {
             """)
             try await Task.sleep(for: .milliseconds(100))
             transport.yield("""
-            {"type":"result","result":"denied","cost_usd":0,"duration_ms":0,"input_tokens":0,"output_tokens":0,"session_id":"sess","num_turns":0}
+            {"type":"result","result":"denied","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"sess","num_turns":0}
             """)
             transport.finishStream()
         }
@@ -272,19 +283,39 @@ struct ClaudeCodeClientTests {
 
     // MARK: - Session
 
-    @Test("createSession extracts session ID from system message")
+    @Test("createSession returns session immediately with generated ID")
+    func testCreateSessionReturnsImmediately() async throws {
+        let transport = MockTransport()
+        let client = ClaudeCodeClient(transport: transport)
+
+        // createSession() no longer waits for system message (CLI v2.x sends
+        // system message only after the first user message).
+        let session = try await client.createSession()
+        let sessionId = await session.id
+        #expect(!sessionId.isEmpty) // Has a generated UUID
+
+        try await session.close()
+    }
+
+    @Test("createSession session ID is updated from system message on first send")
     func testCreateSessionExtractsSessionId() async throws {
         let transport = MockTransport()
         let client = ClaudeCodeClient(transport: transport)
+
+        let session = try await client.createSession()
 
         Task {
             try await Task.sleep(for: .milliseconds(50))
             transport.yield("""
             {"type":"system","session_id":"test-session-123","tools":[],"model":"m","mcp_servers":[]}
             """)
+            transport.yield("""
+            {"type":"result","result":"done","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"test-session-123","num_turns":0}
+            """)
         }
 
-        let session = try await client.createSession()
+        for try await _ in session.send("Hello") {}
+
         let sessionId = await session.id
         #expect(sessionId == "test-session-123")
         try await session.close()
@@ -295,14 +326,20 @@ struct ClaudeCodeClientTests {
         let transport = MockTransport()
         let client = ClaudeCodeClient(transport: transport)
 
+        let session = try await client.resumeSession(id: "resumed-sess")
+
         Task {
             try await Task.sleep(for: .milliseconds(50))
             transport.yield("""
             {"type":"system","session_id":"resumed-sess","tools":[],"model":"m","mcp_servers":[]}
             """)
+            transport.yield("""
+            {"type":"result","result":"done","total_cost_usd":0,"duration_ms":0,"usage":{"input_tokens":0,"output_tokens":0},"session_id":"resumed-sess","num_turns":0}
+            """)
         }
 
-        let session = try await client.resumeSession(id: "resumed-sess")
+        for try await _ in session.send("Resume") {}
+
         let sessionId = await session.id
         #expect(sessionId == "resumed-sess")
         try await session.close()

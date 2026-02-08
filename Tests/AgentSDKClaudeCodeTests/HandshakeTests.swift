@@ -42,13 +42,12 @@ struct HandshakeTests {
 
     // MARK: - Tests
 
-    @Test("Normal flow: initialize_ready → initialize request → system message")
+    @Test("Normal flow: wait for system message (CLI v2.x)")
     func testNormalFlow() async throws {
         let handshake = Handshake(timeoutSeconds: 60)
 
-        // Prepare mock messages
+        // CLI v2.x sends system message directly
         let messages = [
-            #"{"type":"initialize_ready"}"#,
             #"{"type":"system","session_id":"sess_123","tools":[],"model":"claude-opus-4-6","mcp_servers":[]}"#
         ]
         let stream = mockStream(messages: messages)
@@ -64,26 +63,12 @@ struct HandshakeTests {
         #expect(result.tools.isEmpty)
         #expect(result.mcpServers.isEmpty)
 
-        // Verify that initialize request was sent
+        // No initialize request should be sent in v2.x
         let written = getWritten()
-        #expect(written.count == 1)
-
-        // Parse and verify the initialize request JSON
-        let trimmed = written[0].last == 0x0A ? written[0].dropLast() : written[0][...]
-        let json = try JSONSerialization.jsonObject(with: Data(trimmed)) as? [String: Any]
-        #expect(json != nil)
-        #expect(json?["type"] as? String == "control_request")
-        #expect(json?["request_id"] as? String == "req_1_init")
-
-        if let request = json?["request"] as? [String: Any] {
-            #expect(request["subtype"] as? String == "initialize")
-            #expect(request["supported_capabilities"] as? [String] == ["mcp"])
-        } else {
-            Issue.record("Expected request object in JSON")
-        }
+        #expect(written.count == 0)
     }
 
-    @Test("Timeout: stream never yields initialize_ready")
+    @Test("Timeout: stream never yields system message")
     func testTimeout() async throws {
         let handshake = Handshake(timeoutSeconds: 1) // Short timeout for test
         let stream = emptyStream()
@@ -95,14 +80,12 @@ struct HandshakeTests {
         }
     }
 
-    @Test("Missing system message: stream ends after initialize_ready")
+    @Test("Missing system message: stream ends without system message")
     func testMissingSystemMessage() async throws {
         let handshake = Handshake(timeoutSeconds: 60)
 
-        // Stream only contains initialize_ready, then ends
-        let messages = [
-            #"{"type":"initialize_ready"}"#
-        ]
+        // Stream ends without a system message
+        let messages: [String] = []
         let stream = mockStream(messages: messages)
         let (writeFn, _) = mockWriteCapture()
 
@@ -117,7 +100,6 @@ struct HandshakeTests {
         let handshake = Handshake(timeoutSeconds: 60)
 
         let messages = [
-            #"{"type":"initialize_ready"}"#,
             #"{"type":"system","session_id":"sess_456","tools":[{"name":"bash"}],"model":"claude-sonnet-4-5","mcp_servers":[{"name":"server1"}]}"#
         ]
         let stream = mockStream(messages: messages)
@@ -140,6 +122,22 @@ struct HandshakeTests {
         } else {
             Issue.record("Expected object in tools array")
         }
+    }
+
+    @Test("System message with subtype init (CLI v2.x native)")
+    func testSystemMessageWithSubtype() async throws {
+        let handshake = Handshake(timeoutSeconds: 60)
+
+        let messages = [
+            #"{"type":"system","subtype":"init","uuid":"uuid-123","session_id":"sess_789","tools":[],"model":"claude-opus-4-6","mcp_servers":[]}"#
+        ]
+        let stream = mockStream(messages: messages)
+        let (writeFn, _) = mockWriteCapture()
+
+        let result = try await handshake.perform(stream: stream, write: writeFn)
+
+        #expect(result.sessionId == "sess_789")
+        #expect(result.model == "claude-opus-4-6")
     }
 }
 

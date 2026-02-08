@@ -109,8 +109,11 @@ internal actor TransportCore {
         self.workingDirectory = workingDirectory
     }
 
-    /// Connect to the CLI subprocess and perform handshake.
-    /// Returns the post-handshake message stream.
+    /// Connect to the CLI subprocess.
+    ///
+    /// Starts the process and begins forwarding stdout lines immediately.
+    /// CLI v2.x sends the system message only after receiving the first
+    /// user message, so no handshake wait is performed here.
     func connect() async throws -> AsyncThrowingStream<Data, Error> {
         guard !_isReady else {
             throw AgentSDKError.processLaunchFailed(
@@ -142,78 +145,19 @@ internal actor TransportCore {
         // 4. Get stdout stream
         let stdoutStream = await process.stdoutStream()
 
-        // 5. Create output stream (post-handshake messages will be yielded here)
+        // 5. Create output stream — all stdout lines forwarded directly
         let (messageStream, msgCont) = AsyncThrowingStream.makeStream(of: Data.self)
         self.outputContinuation = msgCont
 
-        // 6. Perform handshake within a reader task
-        let codec = JSONLCodec()
-        let flag = HandshakeFlag()
-        let timeoutSeconds = 60
-
-        try await withCheckedThrowingContinuation { (handshakeCont: CheckedContinuation<Void, Error>) in
-            let timeoutTask = Task {
-                try? await Task.sleep(for: .seconds(timeoutSeconds))
-                if flag.tryComplete() {
-                    handshakeCont.resume(
-                        throwing: AgentSDKError.initializationTimeout(seconds: timeoutSeconds)
-                    )
-                    msgCont.finish()
+        // 6. Start reader task — forward all lines without handshake filtering
+        self.readerTask = Task {
+            do {
+                for try await line in stdoutStream {
+                    msgCont.yield(line)
                 }
-            }
-
-            self.readerTask = Task { [process, codec] in
-                var phase = 0 // 0 = waiting for initialize_ready, 1 = waiting for system
-                do {
-                    for try await line in stdoutStream {
-                        if !flag.isCompleted {
-                            let msg: CLIMessage = try codec.decode(line)
-
-                            if phase == 0, case .initializeReady = msg {
-                                let initReq = SDKMessage.controlRequest(SDKControlRequest(
-                                    requestId: "req_1_init",
-                                    request: .init(
-                                        subtype: "initialize",
-                                        supportedCapabilities: ["mcp"],
-                                        hooks: [],
-                                        permissionMode: nil, model: nil,
-                                        userMessageUuid: nil, mcpServers: nil
-                                    )
-                                ))
-                                let data = try codec.encode(initReq)
-                                try await process.writeToStdin(data)
-                                phase = 1
-                            } else if phase == 1, case .system = msg {
-                                timeoutTask.cancel()
-                                if flag.tryComplete() {
-                                    handshakeCont.resume()
-                                }
-                                msgCont.yield(line)
-                            }
-                        } else {
-                            msgCont.yield(line)
-                        }
-                    }
-                    // Stream ended
-                    if !flag.isCompleted {
-                        timeoutTask.cancel()
-                        if flag.tryComplete() {
-                            handshakeCont.resume(throwing: AgentSDKError.protocolError(
-                                message: "Stream ended before handshake completed",
-                                rawData: nil
-                            ))
-                        }
-                    }
-                    msgCont.finish()
-                } catch {
-                    if !flag.isCompleted {
-                        timeoutTask.cancel()
-                        if flag.tryComplete() {
-                            handshakeCont.resume(throwing: error)
-                        }
-                    }
-                    msgCont.finish(throwing: error)
-                }
+                msgCont.finish()
+            } catch {
+                msgCont.finish(throwing: error)
             }
         }
 
@@ -249,29 +193,6 @@ internal actor TransportCore {
             // Direct binary (e.g. `claude` from PATH)
             return (cliURL, [])
         }
-    }
-}
-
-// MARK: - Thread-safe Handshake Flag
-
-/// Ensures the handshake continuation is resumed exactly once.
-private final class HandshakeFlag: @unchecked Sendable {
-    private var _completed = false
-    private let lock = NSLock()
-
-    var isCompleted: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return _completed
-    }
-
-    /// Attempt to mark as completed. Returns `true` only on the first call.
-    func tryComplete() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        if _completed { return false }
-        _completed = true
-        return true
     }
 }
 
