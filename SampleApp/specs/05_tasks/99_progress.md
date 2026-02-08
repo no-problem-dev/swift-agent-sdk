@@ -13,11 +13,11 @@ references:
 
 | ID | タスク | ステータス | ブランチ | PR |
 |----|--------|-----------|---------|-----|
-| T1 | Initialize プロジェクト構造セットアップ | pending | - | - |
-| T2 | Configure Domain Package.swift | pending | - | - |
-| T3 | Configure Infrastructure Package.swift | pending | - | - |
-| T4 | Configure Presentation Package.swift | pending | - | - |
-| T5 | Implement App エントリポイント + 統合ビルド | pending | - | - |
+| T1 | Initialize プロジェクト構造セットアップ | done | feat/p1-w1-project-setup | PR作成中 |
+| T2 | Configure Domain Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
+| T3 | Configure Infrastructure Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
+| T4 | Configure Presentation Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
+| T5 | Implement App エントリポイント + 統合ビルド | done | feat/p1-w1-project-setup | PR作成中 |
 | T6 | Implement Domain エンティティ | pending | - | - |
 | T7 | Implement Domain 値オブジェクト + イベント型 | pending | - | - |
 | T8 | Test Domain エンティティ Unit Test | pending | - | - |
@@ -45,12 +45,12 @@ references:
 
 | Phase | 完了タスク | 全タスク | 進捗率 |
 |-------|----------|---------|--------|
-| Phase 1 | 0 | 5 | 0% |
+| Phase 1 | 5 | 5 | 100% |
 | Phase 2 | 0 | 6 | 0% |
 | Phase 3 | 0 | 5 | 0% |
 | Phase 4 | 0 | 8 | 0% |
 | Phase 5 | 0 | 3 | 0% |
-| **合計** | **0** | **27** | **0%** |
+| **合計** | **5** | **27** | **19%** |
 
 ## ブランチ戦略
 
@@ -70,8 +70,8 @@ references:
 
 | # | 内容 | ステータス | 決定事項 |
 |---|------|-----------|---------|
-| 1 | swift-agent-sdk のローカルパス `../../../../` がリポジトリ構成に依存する | open | 実際の深さを確認し必要に応じて調整 |
-| 2 | no-problem 製パッケージ（swift-markdown-view 等）のバージョン互換性 | open | ビルド時に確認 |
+| 1 | swift-agent-sdk のローカルパス `../../../../` がリポジトリ構成に依存する | resolved | パス確認済み。`../../../../` で正しく解決される |
+| 2 | no-problem 製パッケージ（swift-markdown-view 等）のバージョン互換性 | resolved | ビルド成功。MarkdownView → SwiftMarkdownView に product 名を修正 |
 | 3 | Phase 3 と Phase 4 の並列実行方法 | open | 別ブランチで並列実行し develop にマージ |
 
 ## 更新履歴
@@ -79,3 +79,4 @@ references:
 | 日付 | 変更内容 |
 |------|---------|
 | 2026-02-08 | 初版作成 |
+| 2026-02-08 | Phase 1 (T1-T5) 完了 |
