@@ -5,16 +5,20 @@ import AgentSDKClaudeCode
 import Domain
 
 /// AgentServiceProtocol の SDK 連携実装
-public final class AgentService<T: AgentTransport>: AgentServiceProtocol, @unchecked Sendable {
-    private let client: ClaudeCodeClient<T>
+///
+/// セッションごとに新しい ClaudeCodeTransport + ClaudeCodeClient を作成する。
+/// CLI に `--output-format stream-json` 等の必須引数を渡すため、
+/// 各操作で専用の transport を構築する。
+public final class AgentService: AgentServiceProtocol, @unchecked Sendable {
+    private let cliPath: String?
     private let state: Mutex<State>
 
     private struct State: Sendable {
         var sessions: [String: ClaudeCodeSession] = [:]
     }
 
-    public init(client: ClaudeCodeClient<T>) {
-        self.client = client
+    public init(cliPath: String? = nil) {
+        self.cliPath = cliPath
         self.state = Mutex(State())
     }
 
@@ -28,6 +32,7 @@ public final class AgentService<T: AgentTransport>: AgentServiceProtocol, @unche
                 permissionMode: .bypassPermissions,
                 cwd: config.workingDirectory
             )
+            let client = makeClient(options: options)
             let session = try await client.createSession(options: options)
             let sessionId = await session.id
 
@@ -54,6 +59,13 @@ public final class AgentService<T: AgentTransport>: AgentServiceProtocol, @unche
                 permissionMode: .bypassPermissions,
                 cwd: config.workingDirectory
             )
+            let args = Self.buildArguments(from: options, resumeSessionId: id)
+            let transport = ClaudeCodeTransport(
+                cliPath: cliPath,
+                arguments: args,
+                workingDirectory: options.cwd
+            )
+            let client = ClaudeCodeClient(transport: transport)
             let session = try await client.resumeSession(id: id, options: options)
             let sessionId = await session.id
 
@@ -107,6 +119,50 @@ public final class AgentService<T: AgentTransport>: AgentServiceProtocol, @unche
     }
 
     // MARK: - Private
+
+    private func makeClient(
+        options: SessionOptions,
+        resumeSessionId: String? = nil
+    ) -> ClaudeCodeClient<ClaudeCodeTransport> {
+        let args = Self.buildArguments(from: options, resumeSessionId: resumeSessionId)
+        let transport = ClaudeCodeTransport(
+            cliPath: cliPath,
+            arguments: args,
+            workingDirectory: options.cwd
+        )
+        return ClaudeCodeClient(transport: transport)
+    }
+
+    /// CLIArgBuilder と同等の引数構築（SDK の CLIArgBuilder は internal のため再実装）
+    private static func buildArguments(
+        from options: SessionOptions,
+        resumeSessionId: String? = nil
+    ) -> [String] {
+        var args: [String] = []
+
+        // 必須引数: JSONL ストリームモード
+        args.append(contentsOf: ["--output-format", "stream-json"])
+        args.append(contentsOf: ["--input-format", "stream-json"])
+        args.append("--verbose")
+
+        if let systemPrompt = options.systemPrompt {
+            args.append(contentsOf: ["--system-prompt", systemPrompt])
+        }
+        if let mode = options.permissionMode {
+            args.append(contentsOf: ["--permission-mode", mode.rawValue])
+        }
+        if let maxTurns = options.maxTurns {
+            args.append(contentsOf: ["--max-turns", String(maxTurns)])
+        }
+        if let sessionId = resumeSessionId {
+            args.append(contentsOf: ["--resume", sessionId])
+        }
+        if let model = options.model {
+            args.append(contentsOf: ["--model", model.rawValue])
+        }
+
+        return args
+    }
 
     private func getSession(_ sessionId: String) throws -> ClaudeCodeSession {
         guard let session = state.withLock({ $0.sessions[sessionId] }) else {

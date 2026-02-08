@@ -8,9 +8,12 @@ public enum ServiceFactory {
 
     /// AgentServiceProtocol の実装を生成する
     public static func makeAgentService() -> any AgentServiceProtocol {
-        let transport = ClaudeCodeTransport(cliPath: resolveCliPath())
-        let client = ClaudeCodeClient(transport: transport)
-        return AgentService(client: client)
+        AgentService(cliPath: resolveCliPath())
+    }
+
+    /// SessionStoreProtocol の実装を生成する
+    public static func makeSessionStore() -> any SessionStoreProtocol {
+        JSONSessionStore()
     }
 
     /// ネイティブインストール含む CLI パスを解決する
@@ -31,10 +34,5 @@ public enum ServiceFactory {
         }
         // nil → ClaudeCodeTransport の既定検索 (npm, which) にフォールバック
         return nil
-    }
-
-    /// SessionStoreProtocol の実装を生成する
-    public static func makeSessionStore() -> any SessionStoreProtocol {
-        JSONSessionStore()
     }
 }
