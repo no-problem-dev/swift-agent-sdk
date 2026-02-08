@@ -13,11 +13,11 @@ references:
 
 | ID | タスク | ステータス | ブランチ | PR |
 |----|--------|-----------|---------|-----|
-| T1 | Initialize プロジェクト構造セットアップ | done | feat/p1-w1-project-setup | PR作成中 |
-| T2 | Configure Domain Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
-| T3 | Configure Infrastructure Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
-| T4 | Configure Presentation Package.swift | done | feat/p1-w1-project-setup | PR作成中 |
-| T5 | Implement App エントリポイント + 統合ビルド | done | feat/p1-w1-project-setup | PR作成中 |
+| T1 | Initialize プロジェクト構造セットアップ | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
+| T2 | Configure Domain Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
+| T3 | Configure Infrastructure Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
+| T4 | Configure Presentation Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
+| T5 | Implement App エントリポイント + 統合ビルド | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
 | T6 | Implement Domain エンティティ | pending | - | - |
 | T7 | Implement Domain 値オブジェクト + イベント型 | pending | - | - |
 | T8 | Test Domain エンティティ Unit Test | pending | - | - |
