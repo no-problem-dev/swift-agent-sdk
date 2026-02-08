@@ -1,8 +1,8 @@
 # Swift Agent SDK
 
-A Swift SDK for programmatic interaction with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI. Provides type-safe, async/await APIs for one-shot queries and multi-turn sessions.
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI を Swift からプログラム的に操作するための SDK です。型安全な async/await API で、ワンショットクエリとマルチターンセッションの両方に対応しています。
 
-## Quick Start
+## クイックスタート
 
 ```swift
 import AgentSDKClaudeCode
@@ -16,24 +16,24 @@ for try await message in AgentSDK.query(prompt: "Hello, Claude!") {
 }
 ```
 
-## Prerequisites
+## 前提条件
 
 - **macOS 15+** / Swift 6.0+
-- **Node.js 18+** (`node` must be in PATH)
-- **Claude Code CLI**: `npm install -g @anthropic-ai/claude-code`
-- **Subscription authentication**: Run `claude login` to authenticate (API keys are not used)
+- **Node.js 18+**（`node` が PATH に存在すること）
+- **Claude Code CLI**：`npm install -g @anthropic-ai/claude-code`
+- **サブスクリプション認証**：事前に `claude login` で認証を完了してください（API Key は使用しません）
 
-## Installation
+## インストール
 
-Add to your `Package.swift`:
+`Package.swift` に依存を追加します：
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/anthropics/swift-agent-sdk.git", from: "0.1.0")
+    .package(url: "https://github.com/no-problem-dev/swift-agent-sdk.git", from: "0.1.0")
 ]
 ```
 
-Then add the dependency to your target:
+ターゲットに追加：
 
 ```swift
 .target(
@@ -44,7 +44,7 @@ Then add the dependency to your target:
 )
 ```
 
-For testing utilities, also add:
+テスト用ユーティリティを使う場合は、テストターゲットにも追加します：
 
 ```swift
 .testTarget(
@@ -55,24 +55,26 @@ For testing utilities, also add:
 )
 ```
 
-## Usage
+## 使い方
 
-### One-Shot Query
+### ワンショットクエリ
+
+1 回きりの質問を投げて、ストリーミングで応答を受け取ります。
 
 ```swift
 import AgentSDKClaudeCode
 
 let options = QueryOptions(
     model: .sonnet,
-    systemPrompt: "You are a helpful coding assistant.",
+    systemPrompt: "あなたは Swift のエキスパートです。",
     permissionMode: .bypassPermissions,
     maxTurns: 3
 )
 
-for try await message in AgentSDK.query(prompt: "Explain async/await in Swift", options: options) {
+for try await message in AgentSDK.query(prompt: "async/await の仕組みを教えて", options: options) {
     switch message {
     case .system(let info):
-        print("Session: \(info.sessionId), Model: \(info.model)")
+        print("セッション: \(info.sessionId), モデル: \(info.model)")
     case .assistant(let info):
         for block in info.content {
             if case .text(let text) = block {
@@ -80,15 +82,17 @@ for try await message in AgentSDK.query(prompt: "Explain async/await in Swift", 
             }
         }
     case .result(let info):
-        print("Tokens: \(info.inputTokens) in / \(info.outputTokens) out")
-        print("Cost: $\(info.costUsd)")
+        print("トークン: \(info.inputTokens) 入力 / \(info.outputTokens) 出力")
+        print("コスト: $\(info.costUsd)")
     default:
         break
     }
 }
 ```
 
-### Multi-Turn Session
+### マルチターンセッション
+
+セッションを作成して、会話のコンテキストを維持したまま複数回やり取りできます。
 
 ```swift
 import AgentSDKClaudeCode
@@ -97,15 +101,15 @@ let session = try await AgentSDK.createSession(
     options: SessionOptions(permissionMode: .bypassPermissions)
 )
 
-// First turn
-for try await msg in session.send("What is the capital of France?") {
+// 1 ターン目
+for try await msg in session.send("フランスの首都は？") {
     if case .assistant(let info) = msg {
         print(info.content)
     }
 }
 
-// Follow-up (maintains context)
-for try await msg in session.send("What about Germany?") {
+// 2 ターン目（コンテキストが引き継がれる）
+for try await msg in session.send("ドイツは？") {
     if case .assistant(let info) = msg {
         print(info.content)
     }
@@ -114,69 +118,75 @@ for try await msg in session.send("What about Germany?") {
 try await session.close()
 ```
 
-### Session Resume
+### セッション再開
+
+セッション ID を保存しておけば、後から会話を再開できます。
 
 ```swift
-// Save the session ID
+// セッション ID を保存
 let session = try await AgentSDK.createSession()
 let sessionId = await session.id
 try await session.close()
 
-// Later, resume the session
+// 後から再開
 let resumed = try await AgentSDK.resumeSession(id: sessionId)
-for try await msg in resumed.send("Continue from where we left off") {
+for try await msg in resumed.send("さっきの続きから") {
     // ...
 }
 try await resumed.close()
 ```
 
-### Permission Handling
+### 権限ハンドリング
+
+ツール実行時に許可・拒否を制御できます。
 
 ```swift
 let options = QueryOptions(
     canUseTool: { toolName, input, metadata in
         if toolName == "Write" {
-            return .deny(reason: "File writes are not allowed")
+            return .deny(reason: "ファイル書き込みは許可されていません")
         }
         return .allow
     }
 )
 
-for try await msg in AgentSDK.query(prompt: "Create a file", options: options) {
-    // The agent will be denied from writing files
+for try await msg in AgentSDK.query(prompt: "ファイルを作成して", options: options) {
+    // Write ツールは拒否される
 }
 ```
 
-### Runtime Control (Session)
+### ランタイム制御（セッション内）
+
+セッション中にモデル変更やインタラプトなどの制御が可能です。
 
 ```swift
 let session = try await AgentSDK.createSession()
 
-// Change model mid-session
+// セッション中にモデルを変更
 try await session.setModel(.opus)
 
-// Change permission mode
+// 権限モードを変更
 try await session.setPermissionMode(.acceptEdits)
 
-// Interrupt current processing
+// 処理を中断
 try await session.interrupt()
 
-// Query available models and commands
+// 利用可能なモデルとコマンドを取得
 let models = try await session.supportedModels()
 let commands = try await session.supportedCommands()
 
 try await session.close()
 ```
 
-## Customization (Dependency Injection)
+## カスタマイズ（依存性注入）
 
-The SDK uses a protocol-based architecture that supports DI:
+SDK はプロトコルベースのアーキテクチャを採用しており、Transport を差し替えることで柔軟にカスタマイズできます。
 
 ```swift
 import AgentSDK
 import AgentSDKClaudeCode
 
-// Use a custom transport
+// カスタム設定の Transport を使う
 let transport = ClaudeCodeTransport(
     cliPath: "/custom/path/to/claude",
     runtime: .bun,
@@ -184,23 +194,26 @@ let transport = ClaudeCodeTransport(
 )
 let client = ClaudeCodeClient(transport: transport)
 
-for try await msg in client.query(prompt: "Hello") {
+for try await msg in client.query(prompt: "こんにちは") {
     // ...
 }
 ```
 
-### Testing with MockTransport
+### MockTransport を使ったテスト
+
+CLI を起動せずに Client/Session の振る舞いをテストできます。
 
 ```swift
 import AgentSDKTesting
 
-let mock = MockTransport(responses: MockFixtures.simpleSuccess(text: "Hello!"))
+// モックレスポンスを設定
+let mock = MockTransport(responses: MockFixtures.simpleSuccess(text: "テスト応答"))
 let client = ClaudeCodeClient(transport: mock)
 
-for try await msg in client.query(prompt: "test") {
+for try await msg in client.query(prompt: "テスト") {
     switch msg {
     case .assistant(let info):
-        // Verify the mocked response
+        // モックされた応答を検証
         break
     case .result(let info):
         assert(info.costUsd == 0.001)
@@ -209,62 +222,64 @@ for try await msg in client.query(prompt: "test") {
     }
 }
 
-// Verify what was sent
+// 送信されたメッセージを検証
 assert(!mock.sentMessages.isEmpty)
 ```
 
-## Architecture
+## アーキテクチャ
+
+SDK は 3 つのモジュールで構成されています：
 
 ```
-AgentSDK              Protocol layer (AgentTransport, AgentClient, AgentSession)
-AgentSDKClaudeCode    Claude Code CLI implementation
-AgentSDKTesting       MockTransport & fixtures for testing
+AgentSDK              プロトコル層（AgentTransport, AgentClient, AgentSession）
+AgentSDKClaudeCode    Claude Code CLI の具象実装
+AgentSDKTesting       テスト用 MockTransport & フィクスチャ
 ```
 
-| Protocol | Implementation | Description |
-|----------|---------------|-------------|
-| `AgentTransport` | `ClaudeCodeTransport` | CLI subprocess management |
-| `AgentClient` | `ClaudeCodeClient<T>` | Query and session orchestration |
-| `AgentSession` | `ClaudeCodeSession` | Multi-turn conversation state |
+| プロトコル | 具象実装 | 役割 |
+|-----------|---------|------|
+| `AgentTransport` | `ClaudeCodeTransport` | CLI サブプロセスの管理 |
+| `AgentClient` | `ClaudeCodeClient<T>` | クエリ・セッションのオーケストレーション |
+| `AgentSession` | `ClaudeCodeSession` | マルチターン会話の状態管理 |
 
-## API Reference
+## API リファレンス
 
-### AgentSDK (Convenience)
+### AgentSDK（コンビニエンス API）
 
-| Method | Description |
-|--------|-------------|
-| `AgentSDK.query(prompt:options:)` | One-shot query returning `AsyncThrowingStream<AgentMessage, Error>` |
-| `AgentSDK.createSession(options:)` | Create a new multi-turn session |
-| `AgentSDK.resumeSession(id:options:)` | Resume an existing session |
+| メソッド | 説明 |
+|---------|------|
+| `AgentSDK.query(prompt:options:)` | ワンショットクエリ。`AsyncThrowingStream<AgentMessage, Error>` を返す |
+| `AgentSDK.createSession(options:)` | 新規マルチターンセッションを作成 |
+| `AgentSDK.resumeSession(id:options:)` | 既存セッションを再開 |
 
 ### AgentMessage
 
-| Case | Info Type | Description |
-|------|-----------|-------------|
-| `.system` | `SystemInfo` | Session ID, tools, model info |
-| `.assistant` | `AssistantInfo` | Content blocks (text, tool use, tool result) |
-| `.partial` | `PartialInfo` | Streaming partial content |
-| `.result` | `ResultInfo` | Final result with cost, tokens, duration |
+| ケース | 型 | 説明 |
+|-------|------|------|
+| `.system` | `SystemInfo` | セッション ID、利用可能ツール、モデル情報 |
+| `.assistant` | `AssistantInfo` | コンテンツブロック（テキスト、ツール使用、ツール結果） |
+| `.partial` | `PartialInfo` | ストリーミング中の部分応答 |
+| `.result` | `ResultInfo` | 最終結果（コスト、トークン数、所要時間） |
 
 ### QueryOptions / SessionOptions
 
-| Property | Type | Description |
-|----------|------|-------------|
+| プロパティ | 型 | 説明 |
+|-----------|------|------|
 | `model` | `ModelSelection?` | `.opus`, `.sonnet`, `.haiku`, `.custom(String)` |
-| `systemPrompt` | `String?` | System prompt |
+| `systemPrompt` | `String?` | システムプロンプト |
 | `permissionMode` | `PermissionMode?` | `.default`, `.acceptEdits`, `.bypassPermissions`, `.plan` |
-| `canUseTool` | Closure? | Permission handler for tool execution |
-| `maxTurns` | `Int?` | Maximum conversation turns |
-| `maxBudgetUsd` | `Double?` | Budget limit |
-| `allowedTools` | `[String]?` | Whitelist of allowed tools |
-| `disallowedTools` | `[String]?` | Blacklist of tools |
+| `canUseTool` | クロージャ? | ツール実行の許可・拒否ハンドラ |
+| `maxTurns` | `Int?` | 最大会話ターン数 |
+| `maxBudgetUsd` | `Double?` | 予算上限（USD） |
+| `allowedTools` | `[String]?` | 許可するツールのリスト |
+| `disallowedTools` | `[String]?` | 禁止するツールのリスト |
 
-## Version Compatibility
+## バージョン互換性
 
 | Swift Agent SDK | Claude Code CLI | Swift | macOS | Node.js |
 |----------------|----------------|-------|-------|---------|
-| 0.1.x | Latest | 6.0+ | 15+ | 18+ |
+| 0.1.x | 最新版 | 6.0+ | 15+ | 18+ |
 
-## License
+## ライセンス
 
-See [LICENSE](LICENSE) for details.
+詳細は [LICENSE](LICENSE) を参照してください。
