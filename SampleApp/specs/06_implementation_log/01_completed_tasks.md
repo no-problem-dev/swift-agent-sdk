@@ -162,3 +162,9 @@ tags: [implementation-log, claude-agent]
 - **成果物**: `ServiceFactory.swift`, `ClaudeAgentApp.swift` 更新
 - **補足**: Cmd+N キーボードショートカット対応、NSApplication.willTerminateNotification でセッション保存
 - **検証**: `xcodegen generate` + `xcodebuild build` 成功、19 tests all passing
+
+### T27: QA Manual QA + 最終調整 + README
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p5-integration
+- **概要**: README.md 作成、NFR 検証（コード量 2,435行 < 3,000行、strict concurrency 警告ゼロ）
+- **成果物**: `README.md`（セットアップ手順、使い方、アーキテクチャ概要）
