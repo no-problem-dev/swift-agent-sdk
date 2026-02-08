@@ -29,14 +29,14 @@ references:
 | T14 | Implement JSONSessionStore | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
 | T15 | Implement AgentService 完全実装 | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
 | T16 | Test AgentService Integration Test | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
-| T17 | Implement AppState + SessionState 骨格 | done | feat/p4-w1-stores-views | - |
-| T18 | Create ContentView + EmptySessionView | done | feat/p4-w1-stores-views | - |
-| T19 | Create SessionSidebar + SessionRow + StatusBadge | done | feat/p4-w1-stores-views | - |
-| T20 | Create InputArea | done | feat/p4-w1-stores-views | - |
-| T21 | Create ChatView + MessageBubble + StreamingTextView | done | feat/p4-w1-stores-views | - |
-| T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | done | feat/p4-w1-stores-views | - |
-| T23 | Implement Store ロジック完全実装 | done | feat/p4-w1-stores-views | - |
-| T24 | Test Presentation Unit Test | done | feat/p4-w1-stores-views | - |
+| T17 | Implement AppState + SessionState 骨格 | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T18 | Create ContentView + EmptySessionView | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T19 | Create SessionSidebar + SessionRow + StatusBadge | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T20 | Create InputArea | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T21 | Create ChatView + MessageBubble + StreamingTextView | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T23 | Implement Store ロジック完全実装 | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
+| T24 | Test Presentation Unit Test | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
 | T25 | Implement DI ワイヤリング + 統合ビルド | pending | - | - |
 | T26 | Verify Integration Test + E2E テスト | pending | - | - |
 | T27 | QA Manual QA + 最終調整 + README | pending | - | - |
