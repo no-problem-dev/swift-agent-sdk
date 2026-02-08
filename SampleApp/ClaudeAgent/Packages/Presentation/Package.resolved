@@ -1,0 +1,60 @@
+{
+  "originHash" : "1a8ce991ecef66e914993d0cedff2089765aa339a86937eb59e6c18e932c74d7",
+  "pins" : [
+    {
+      "identity" : "highlightswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/appstefan/HighlightSwift.git",
+      "state" : {
+        "revision" : "784ca3ccfc8a2cf724fbb2f06cb6ec3329424da3",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "swift-cmark",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-cmark.git",
+      "state" : {
+        "revision" : "5d9bdaa4228b381639fff09403e39a04926e2dbe",
+        "version" : "0.7.1"
+      }
+    },
+    {
+      "identity" : "swift-design-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/no-problem-dev/swift-design-system",
+      "state" : {
+        "revision" : "01c0a7eec986884de3c026f6b184f6b39529e7e3",
+        "version" : "1.0.22"
+      }
+    },
+    {
+      "identity" : "swift-markdown",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-markdown.git",
+      "state" : {
+        "revision" : "7d9a5ce307528578dfa777d505496bd5f544ad94",
+        "version" : "0.7.3"
+      }
+    },
+    {
+      "identity" : "swift-markdown-view",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/no-problem-dev/swift-markdown-view",
+      "state" : {
+        "revision" : "ce1024f94f42e1c58b13b6f2e70ff5fa40d69c94",
+        "version" : "1.0.9"
+      }
+    },
+    {
+      "identity" : "swift-ui-routing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/no-problem-dev/swift-ui-routing",
+      "state" : {
+        "revision" : "1f15a39ce6ee19edba8d853fdbb5ec9c0d763035",
+        "version" : "1.0.12"
+      }
+    }
+  ],
+  "version" : 3
+}
