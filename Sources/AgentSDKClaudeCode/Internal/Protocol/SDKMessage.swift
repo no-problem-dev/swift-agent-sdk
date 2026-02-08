@@ -61,8 +61,12 @@ extension SDKMessage: Encodable {
         switch self {
         case .userMessage(let content):
             var container = encoder.container(keyedBy: UserMessageKeys.self)
-            try container.encode("user_message", forKey: .type)
-            try container.encode(content, forKey: .content)
+            try container.encode("user", forKey: .type)
+            let messageBody = UserMessageBody(
+                role: "user",
+                content: [UserContentBlock(type: "text", text: content)]
+            )
+            try container.encode(messageBody, forKey: .message)
         case .controlRequest(let req):
             var container = encoder.container(keyedBy: ControlKeys.self)
             try container.encode("control_request", forKey: .type)
@@ -75,7 +79,17 @@ extension SDKMessage: Encodable {
         }
     }
 
-    private enum UserMessageKeys: String, CodingKey { case type, content }
+    private enum UserMessageKeys: String, CodingKey { case type, message }
     private enum ControlKeys: String, CodingKey { case type, requestId = "request_id", request }
     private enum ControlResponseKeys: String, CodingKey { case type, response }
+
+    private struct UserMessageBody: Sendable, Encodable {
+        let role: String
+        let content: [UserContentBlock]
+    }
+
+    private struct UserContentBlock: Sendable, Encodable {
+        let type: String
+        let text: String
+    }
 }

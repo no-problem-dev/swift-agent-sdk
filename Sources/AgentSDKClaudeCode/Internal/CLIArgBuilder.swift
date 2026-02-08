@@ -25,6 +25,7 @@ internal struct CLIArgBuilder: Sendable {
         var args: [String] = []
 
         // Default arguments
+        args.append("-p")
         args.append(contentsOf: ["--output-format", "stream-json"])
         args.append(contentsOf: ["--input-format", "stream-json"])
         args.append("--verbose")

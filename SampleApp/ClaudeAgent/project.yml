@@ -1,0 +1,45 @@
+name: ClaudeAgent
+options:
+  bundleIdPrefix: dev.noproblem
+  deploymentTarget:
+    macOS: "15.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+
+# ローカル SPM パッケージ（Pattern B の核心）
+localPackages:
+  - Packages/Domain
+  - Packages/Infrastructure
+  - Packages/Presentation
+
+targets:
+  ClaudeAgent:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/Sources
+    resources:
+      - path: Resources
+    entitlements:
+      path: App/ClaudeAgent.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
+        PRODUCT_BUNDLE_IDENTIFIER: dev.noproblem.ClaudeAgent
+        PRODUCT_NAME: ClaudeAgent
+        GENERATE_INFOPLIST_FILE: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+    dependencies:
+      - package: Domain
+      - package: Infrastructure
+      - package: Presentation

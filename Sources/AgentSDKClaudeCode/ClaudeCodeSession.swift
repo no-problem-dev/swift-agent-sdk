@@ -14,15 +14,19 @@ import AgentSDK
 /// ```
 public final class ClaudeCodeSession: AgentSession, @unchecked Sendable {
 
-    private let _sessionId: String
+    /// Thread-safe mutable box for the session ID.
+    private let sessionIdRef: LockedRef<String>
     private let transport: any AgentTransport
     private let router: MessageRouter
     private let routingTask: Task<Void, Never>
     private let codec = JSONLCodec()
 
     /// Session identifier.
+    ///
+    /// Initially a client-generated UUID. Updated to the CLI's real
+    /// session ID when the first system message arrives (on the first ``send(_:)``).
     public var id: String {
-        get async { _sessionId }
+        get async { sessionIdRef.value }
     }
 
     internal init(
@@ -31,7 +35,7 @@ public final class ClaudeCodeSession: AgentSession, @unchecked Sendable {
         router: MessageRouter,
         routingTask: Task<Void, Never>
     ) {
-        self._sessionId = sessionId
+        self.sessionIdRef = LockedRef(sessionId)
         self.transport = transport
         self.router = router
         self.routingTask = routingTask
@@ -56,16 +60,23 @@ public final class ClaudeCodeSession: AgentSession, @unchecked Sendable {
         let transport = self.transport
         let codec = self.codec
         let router = self.router
+        let idRef = self.sessionIdRef
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    // Send user message
+                    // Create stream BEFORE sending user message so no messages are dropped
+                    let stream = await router.makeStream()
+
+                    // Send user message (triggers CLI to output system + response)
                     let data = try codec.encode(SDKMessage.userMessage(content: message))
                     try await transport.write(data)
 
                     // Stream responses until result
-                    let stream = await router.makeStream()
                     for try await msg in stream {
+                        // Capture CLI session ID from system message
+                        if case .system(let info) = msg {
+                            idRef.value = info.sessionId
+                        }
                         continuation.yield(msg)
                         if case .result = msg {
                             break
@@ -212,5 +223,33 @@ public final class ClaudeCodeSession: AgentSession, @unchecked Sendable {
             return nil
         }
         return result
+    }
+}
+
+// MARK: - Thread-safe Value Box
+
+/// Thread-safe mutable value container.
+///
+/// Uses `NSLock` internally. All property accesses are synchronous
+/// to avoid issues with lock/unlock in async contexts.
+internal final class LockedRef<T: Sendable>: @unchecked Sendable {
+    private var _value: T
+    private let lock = NSLock()
+
+    init(_ value: T) {
+        self._value = value
+    }
+
+    var value: T {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _value
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _value = newValue
+        }
     }
 }
