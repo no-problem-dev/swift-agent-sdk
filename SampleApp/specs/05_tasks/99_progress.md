@@ -18,12 +18,12 @@ references:
 | T3 | Configure Infrastructure Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
 | T4 | Configure Presentation Package.swift | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
 | T5 | Implement App エントリポイント + 統合ビルド | done | feat/p1-w1-project-setup | [#3](https://github.com/no-problem-dev/swift-agent-sdk/pull/3) |
-| T6 | Implement Domain エンティティ | done | feat/p2-domain | PR作成中 |
-| T7 | Implement Domain 値オブジェクト + イベント型 | done | feat/p2-domain | PR作成中 |
-| T8 | Test Domain エンティティ Unit Test | done | feat/p2-domain | PR作成中 |
-| T9 | Implement Domain プロトコル | done | feat/p2-domain | PR作成中 |
-| T10 | Implement Domain AppError | done | feat/p2-domain | PR作成中 |
-| T11 | Test Domain 総合テスト + クリーンアップ | done | feat/p2-domain | PR作成中 |
+| T6 | Implement Domain エンティティ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T7 | Implement Domain 値オブジェクト + イベント型 | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T8 | Test Domain エンティティ Unit Test | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T9 | Implement Domain プロトコル | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T10 | Implement Domain AppError | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
+| T11 | Test Domain 総合テスト + クリーンアップ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T12 | Implement AgentMessageMapper | pending | - | - |
 | T13 | Implement AgentService 骨格 | pending | - | - |
 | T14 | Implement JSONSessionStore | pending | - | - |
