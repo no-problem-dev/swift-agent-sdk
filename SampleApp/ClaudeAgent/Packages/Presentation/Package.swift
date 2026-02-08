@@ -9,9 +9,9 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Domain"),
-        .package(url: "https://github.com/no-problem-dev/swift-markdown-view", from: "1.0.0"),
-        .package(url: "https://github.com/no-problem-dev/swift-design-system", from: "1.0.0"),
-        .package(url: "https://github.com/no-problem-dev/swift-ui-routing", from: "1.0.0"),
+        .package(url: "https://github.com/no-problem-dev/swift-markdown-view", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/no-problem-dev/swift-design-system", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/no-problem-dev/swift-ui-routing", .upToNextMajor(from: "1.0.0")),
     ],
     targets: [
         .target(

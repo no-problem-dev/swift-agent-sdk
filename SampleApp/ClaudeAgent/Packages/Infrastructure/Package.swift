@@ -16,6 +16,7 @@ let package = Package(
             name: "Infrastructure",
             dependencies: [
                 .product(name: "Domain", package: "Domain"),
+                .product(name: "AgentSDK", package: "swift-agent-sdk"),
                 .product(name: "AgentSDKClaudeCode", package: "swift-agent-sdk"),
             ]
         ),
@@ -23,6 +24,7 @@ let package = Package(
             name: "InfrastructureTests",
             dependencies: [
                 "Infrastructure",
+                .product(name: "AgentSDK", package: "swift-agent-sdk"),
                 .product(name: "AgentSDKTesting", package: "swift-agent-sdk"),
             ]
         ),
