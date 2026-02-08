@@ -29,14 +29,14 @@ references:
 | T14 | Implement JSONSessionStore | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
 | T15 | Implement AgentService 完全実装 | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
 | T16 | Test AgentService Integration Test | done | feat/p3-infrastructure | [#5](https://github.com/no-problem-dev/swift-agent-sdk/pull/5) |
-| T17 | Implement AppState + SessionState 骨格 | pending | - | - |
-| T18 | Create ContentView + EmptySessionView | pending | - | - |
-| T19 | Create SessionSidebar + SessionRow + StatusBadge | pending | - | - |
-| T20 | Create InputArea | pending | - | - |
-| T21 | Create ChatView + MessageBubble + StreamingTextView | pending | - | - |
-| T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | pending | - | - |
-| T23 | Implement Store ロジック完全実装 | pending | - | - |
-| T24 | Test Presentation Unit Test | pending | - | - |
+| T17 | Implement AppState + SessionState 骨格 | done | feat/p4-w1-stores-views | - |
+| T18 | Create ContentView + EmptySessionView | done | feat/p4-w1-stores-views | - |
+| T19 | Create SessionSidebar + SessionRow + StatusBadge | done | feat/p4-w1-stores-views | - |
+| T20 | Create InputArea | done | feat/p4-w1-stores-views | - |
+| T21 | Create ChatView + MessageBubble + StreamingTextView | done | feat/p4-w1-stores-views | - |
+| T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | done | feat/p4-w1-stores-views | - |
+| T23 | Implement Store ロジック完全実装 | done | feat/p4-w1-stores-views | - |
+| T24 | Test Presentation Unit Test | done | feat/p4-w1-stores-views | - |
 | T25 | Implement DI ワイヤリング + 統合ビルド | pending | - | - |
 | T26 | Verify Integration Test + E2E テスト | pending | - | - |
 | T27 | QA Manual QA + 最終調整 + README | pending | - | - |
@@ -48,9 +48,9 @@ references:
 | Phase 1 | 5 | 5 | 100% |
 | Phase 2 | 6 | 6 | 100% |
 | Phase 3 | 5 | 5 | 100% |
-| Phase 4 | 0 | 8 | 0% |
+| Phase 4 | 8 | 8 | 100% |
 | Phase 5 | 0 | 3 | 0% |
-| **合計** | **16** | **27** | **59%** |
+| **合計** | **24** | **27** | **89%** |
 
 ## ブランチ戦略
 
@@ -60,8 +60,7 @@ references:
 | P1-W2+W3 | feat/p1-w2-packages | T2, T3, T4, T5 |
 | P2-W1+W2+W3 | feat/p2-domain | T6, T7, T8, T9, T10, T11 |
 | P3-W1+W2+W3 | feat/p3-infrastructure | T12, T13, T14, T15, T16 |
-| P4-W1+W2 | feat/p4-w1-stores-views | T17, T18, T19, T20 |
-| P4-W3+W4+W5 | feat/p4-w3-chat-logic | T21, T22, T23, T24 |
+| P4-all | feat/p4-w1-stores-views | T17, T18, T19, T20, T21, T22, T23, T24 |
 | P5-W1+W2+W3 | feat/p5-integration | T25, T26, T27 |
 
 > Wave が小さい場合は複数 Wave をまとめるブランチ戦略。
@@ -82,3 +81,4 @@ references:
 | 2026-02-08 | Phase 1 (T1-T5) 完了 |
 | 2026-02-08 | Phase 2 (T6-T11) 完了 |
 | 2026-02-08 | Phase 3 (T12-T16) 完了 |
+| 2026-02-08 | Phase 4 (T17-T24) 完了 |

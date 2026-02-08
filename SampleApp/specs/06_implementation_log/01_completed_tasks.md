@@ -107,3 +107,48 @@ tags: [implementation-log, claude-agent]
 - **ブランチ**: feat/p3-infrastructure
 - **概要**: AgentMessageMapper (12 tests), JSONSessionStore (8 tests), AgentService (6 tests)
 - **検証**: 26 tests in 3 suites, all passing, zero warnings
+
+## Phase 4: Presentation パッケージ実装
+
+### T17: Implement AppState + SessionState
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: @Observable @MainActor Store クラス。AppState (セッション管理)、SessionState (個別セッション状態)
+- **補足**: ストリーム処理、永続化、ライフサイクル管理を含む完全実装
+
+### T18: Create ContentView + EmptySessionView
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: NavigationSplitView ルートビュー + セッション未選択時プレースホルダー
+
+### T19: Create SessionSidebar + SessionRow + StatusBadge
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: セッション一覧、コンテキストメニュー、ステータス色分けバッジ (4色)
+
+### T20: Create InputArea
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: TextEditor + Enter送信/Shift+Enter改行 + 送信/停止ボタン切替
+
+### T21: Create ChatView + MessageBubble + StreamingTextView
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: ScrollView + LazyVStack メッセージ一覧、自動スクロール、カーソルアニメーション
+
+### T22: Create ToolUseCard + ToolResultCard + NewSessionSheet
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: DesignSystem Card でツール表示、折りたたみ結果表示、NSOpenPanel ディレクトリ選択
+
+### T23: Implement Store ロジック完全実装
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: T17 と統合実装。セッション CRUD + send/interrupt/reconnect/disconnect/setModel
+- **補足**: AsyncThrowingStream 処理、weak self で retain cycle 防止
+
+### T24: Test Presentation Unit Test
+- **完了日**: 2026-02-08
+- **ブランチ**: feat/p4-w1-stores-views
+- **概要**: MockAgentService + MockSessionStore で Store テスト
+- **検証**: 19 tests in 2 suites (AppState 8, SessionState 11), all passing
