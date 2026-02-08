@@ -121,7 +121,7 @@ references:
 
 ---
 
-## Phase 3: クライアント・セッション（T15〜T19） - IN_PROGRESS
+## Phase 3: クライアント・セッション（T15〜T19） - DONE
 
 ### T15: Implement MessageRouter
 - **完了日**: 2026-02-08
@@ -144,7 +144,8 @@ references:
   - Tests/AgentSDKClaudeCodeTests/ClaudeCodeTransportTests.swift
 
 ### T17: Implement ClaudeCodeClient
-- **状態**: 実装完了・未コミット
+- **完了日**: 2026-02-08
+- **コミット**: `48066dd`
 - **実装内容**: `ClaudeCodeClient<T: AgentTransport>` generics DI、query/createSession/resumeSession
 - **判断事項**:
   - テストを MockTransport ベースに変更（シェルスクリプト依存を排除）
@@ -154,7 +155,8 @@ references:
   - Tests/AgentSDKClaudeCodeTests/Helpers/MockTransport.swift (新規)
 
 ### T18: Implement ClaudeCodeSession
-- **状態**: 実装完了・未コミット
+- **完了日**: 2026-02-08
+- **コミット**: `5368eec`
 - **実装内容**: `final class ClaudeCodeSession: AgentSession`、send/interrupt/close + 7 ランタイム制御メソッド
 - **判断事項**:
   - `@unchecked Sendable` + 内部 MessageRouter actor で並行安全性確保
@@ -164,7 +166,8 @@ references:
   - Tests/AgentSDKClaudeCodeTests/ClaudeCodeSessionTests.swift (新規)
 
 ### T19: Implement AgentSDK convenience API
-- **状態**: 実装完了・未コミット
+- **完了日**: 2026-02-08
+- **コミット**: `f837a02`
 - **実装内容**: AgentSDK extension with query/createSession/resumeSession
 - **判断事項**:
   - AgentSDK → AgentSDKClaudeCode は循環依存のため、convenience API は AgentSDKClaudeCode モジュール内の extension として実装
@@ -172,3 +175,79 @@ references:
 - **変更ファイル**:
   - Sources/AgentSDKClaudeCode/AgentSDK+Convenience.swift (新規)
   - Sources/AgentSDK/AgentSDK.swift (修正)
+
+---
+
+## Phase 4: テスト・ドキュメント・統合（T20〜T25） - IN_PROGRESS
+
+### T20: Implement MockTransport
+- **完了日**: 2026-02-08
+- **コミット**: `e05776b`
+- **実装内容**: `final class MockTransport: AgentTransport, @unchecked Sendable`（Synchronization.Mutex ベース）
+- **判断事項**:
+  - actor 実装 → `messages()` が non-async protocol 要件と互換性なく断念
+  - NSLock → Swift 6 async context で unavailable、断念
+  - `Synchronization.Mutex` + `withLock` パターンで解決
+- **変更ファイル**:
+  - Sources/AgentSDKTesting/MockTransport.swift (新規)
+  - Tests/AgentSDKTests/MockTransportTests.swift (新規)
+
+### T21: Implement MockFixtures
+- **完了日**: 2026-02-08
+- **コミット**: `e05776b`
+- **実装内容**: `enum MockFixtures` with simpleSuccess/withToolUse/protocolError factory methods
+- **変更ファイル**:
+  - Sources/AgentSDKTesting/MockFixtures.swift (新規)
+  - Tests/AgentSDKTests/MockFixturesTests.swift (新規)
+
+### T22: Test ClaudeCodeClient with MockTransport
+- **完了日**: 2026-02-08
+- **コミット**: `6f3762c`
+- **実装内容**: 20 テスト追加（Client 11 + Session 9）。query 成功/ツール使用/canUseTool allow+deny/エラー伝播/セッション作成・再開・送信・マルチターン・サブエージェント
+- **判断事項**:
+  - 全テストスイートに `.serialized` trait を追加（並列実行時のスレッドプール飽和防止）
+  - 内部 MockTransport に `simulatedConnectFailure` プロパティ追加
+  - `swift test` 全体実行は依然ハング（個別スイートは全パス）→ T25 CI で回避策
+- **変更ファイル**:
+  - Tests/AgentSDKClaudeCodeTests/ClaudeCodeClientTests.swift (大幅拡張)
+  - Tests/AgentSDKClaudeCodeTests/ClaudeCodeSessionTests.swift (大幅拡張)
+  - Tests/AgentSDKClaudeCodeTests/Helpers/MockTransport.swift (simulatedConnectFailure 追加)
+  - Tests/AgentSDKClaudeCodeTests/*.swift (5 ファイルに .serialized 追加)
+
+### T23: Test EndToEnd（統合テスト）
+- **完了日**: 2026-02-08
+- **コミット**: (pending)
+- **実装内容**: 環境変数ゲート付き統合テスト（ErrorPathTests 3テスト + LiveCLITests 2テスト）
+- **判断事項**:
+  - Swift Testing `.enabled(if:)` trait でテストスキップを実現
+  - ErrorPathTests: CLI不要（cliNotFound, notConnected エラーパス検証）
+  - LiveCLITests: 実CLI + 認証必須（helloWorldQuery, sessionCreateAndSend）
+  - `isCLIAvailable` で `which claude` 成功をチェックするが、SDK プロトコル対応は実行時に検証
+  - `permissionMode: .bypassPermissions, maxTurns: 1` で安全な実行を担保
+- **変更ファイル**:
+  - Tests/IntegrationTests/IntegrationTests.swift (プレースホルダから本テストに置換)
+
+### T24: Create README + DocC コメント整備
+- **完了日**: 2026-02-08
+- **コミット**: (pending)
+- **実装内容**: README.md 作成（Quick Start 7行、インストール、前提条件、使用例5セクション、カスタマイズ、アーキテクチャ、API リファレンス、バージョン互換表）
+- **判断事項**:
+  - DocC コメントは既に全 public API に付与済みのため追加不要
+  - swift-docc-plugin は未導入（T25 CI で検討可能）
+  - README 使用例は実際の API シグネチャと整合するよう記述
+- **変更ファイル**:
+  - README.md (新規)
+
+### T25: Configure GitHub Actions CI
+- **完了日**: 2026-02-08
+- **コミット**: (pending)
+- **実装内容**: GitHub Actions ワークフロー 2 ファイル（test.yml + integration.yml）
+- **判断事項**:
+  - test.yml: テストターゲットを個別実行（`swift test` 全体実行のハング問題の回避策）
+  - test.yml: push/PR で自動実行、concurrency で重複ジョブをキャンセル
+  - integration.yml: 手動(workflow_dispatch) + 週次スケジュール
+  - integration.yml: Node.js 18 + Claude Code CLI インストール + env var ゲート
+  - macos-15 ランナーを使用（Swift 6.0 対応）
+- **変更ファイル**:
+  - .github/workflows/test.yml (新規)
+  - .github/workflows/integration.yml (新規)

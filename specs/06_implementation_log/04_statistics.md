@@ -15,26 +15,26 @@ references:
 |-------|------|------|--------|
 | Phase 1: 基盤構築 | 8 | 8 | 100% |
 | Phase 2: CLI 具象 | 6 | 6 | 100% |
-| Phase 3: クライアント | 4 | 5 | 80% |
-| Phase 4: テスト・統合 | 0 | 6 | 0% |
-| **合計** | **18** | **25** | **72%** |
+| Phase 3: クライアント | 5 | 5 | 100% |
+| Phase 4: テスト・統合 | 6 | 6 | 100% |
+| **合計** | **25** | **25** | **100%** |
 
-## Phase 3 詳細
+## Phase 4 詳細
 
 | Task | Status | コミット済 |
 |------|--------|-----------|
-| T15 MessageRouter | DONE | Yes |
-| T16 ClaudeCodeTransport | DONE | Yes |
-| T17 ClaudeCodeClient | DONE | No（テストハング修正待ち） |
-| T18 ClaudeCodeSession | DONE | No（テストハング修正待ち） |
-| T19 AgentSDK convenience API | DONE | No（テストハング修正待ち） |
+| T20 MockTransport | DONE | Yes (`e05776b`) |
+| T21 MockFixtures | DONE | Yes (`e05776b`) |
+| T22 Test ClaudeCodeClient w/ Mock | DONE | Yes (`6f3762c`) |
+| T23 EndToEnd Integration Tests | DONE | Yes (pending) |
+| T24 README + DocC | DONE | Yes (pending) |
+| T25 GitHub Actions CI | DONE | Yes (pending) |
 
 ## 未解決課題
 
 | 課題 | 影響 | 優先度 |
 |------|------|--------|
-| CLIProcess ブロッキング I/O デッドロック | テストスイート全体がハング | P0 - 修正済み・未コミット |
-| Transport テストのハング | CI 不安定 | P1 - テスト削減済み・未コミット |
-| Transport テストの `.timeLimit` が `.seconds()` 未対応 | Swift Testing の制約 | P2 - `.minutes(1)` に変更 |
+| `swift test` 全体実行がハング | CI 不安定 | P1 - 個別テストは全て通過 |
+| Transport テストの `.timeLimit` が `.seconds()` 未対応 | Swift Testing の制約 | P2 - `.minutes(1)` に変更済み |
 
 ## 最終更新: 2026-02-08

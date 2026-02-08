@@ -3,7 +3,7 @@ import Foundation
 @testable import AgentSDKClaudeCode
 import AgentSDK
 
-@Suite("ClaudeCodeTransport Tests")
+@Suite("ClaudeCodeTransport Tests", .serialized)
 struct ClaudeCodeTransportTests {
 
     // MARK: - JSRuntime Tests

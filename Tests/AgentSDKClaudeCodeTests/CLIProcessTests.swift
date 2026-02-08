@@ -3,7 +3,7 @@ import Foundation
 import AgentSDK
 @testable import AgentSDKClaudeCode
 
-@Suite("CLIProcess Tests")
+@Suite("CLIProcess Tests", .serialized)
 struct CLIProcessTests {
 
     @Test("Start and reach running state")

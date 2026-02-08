@@ -3,7 +3,7 @@ import Foundation
 @testable import AgentSDKClaudeCode
 import AgentSDK
 
-@Suite("Handshake Tests")
+@Suite("Handshake Tests", .serialized)
 struct HandshakeTests {
 
     // MARK: - Helper Functions
