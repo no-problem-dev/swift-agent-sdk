@@ -1,48 +1,84 @@
 import SwiftUI
 import Domain
+import DesignSystem
 
 /// メッセージ入力エリア
 struct InputArea: View {
     @Bindable var session: SessionState
     @State private var text: String = ""
-    @FocusState private var isFocused: Bool
+    @Environment(\.colorPalette) private var colors
+    @Environment(\.spacingScale) private var spacing
+    @Environment(\.radiusScale) private var radius
+    @Environment(\.motion) private var motion
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            TextEditor(text: $text)
-                .font(.body)
-                .frame(minHeight: 36, maxHeight: 120)
-                .fixedSize(horizontal: false, vertical: true)
-                .focused($isFocused)
-                .onKeyPress(.return, phases: .down) { keyPress in
-                    if keyPress.modifiers.contains(.shift) {
-                        return .ignored
-                    }
-                    sendMessage()
-                    return .handled
+        HStack(alignment: .bottom, spacing: spacing.sm) {
+            // Text input (NSTextView ベース)
+            ZStack(alignment: .topLeading) {
+                // プレースホルダー
+                if text.isEmpty {
+                    Text("Claudeにメッセージを送信...")
+                        .font(.body)
+                        .foregroundStyle(colors.onSurfaceVariant.opacity(0.4))
+                        .padding(.leading, 4)
+                        .padding(.top, 4)
+                        .allowsHitTesting(false)
                 }
 
-            if session.isProcessing {
-                Button {
-                    Task { await session.interrupt() }
-                } label: {
-                    Image(systemName: "stop.circle.fill")
-                        .font(.title2)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.red)
-            } else {
-                Button {
-                    sendMessage()
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                }
-                .buttonStyle(.plain)
-                .disabled(cannotSend)
+                ChatTextView(
+                    text: $text,
+                    font: .systemFont(ofSize: NSFont.systemFontSize),
+                    maxHeight: 120,
+                    isEnabled: session.status == .connected,
+                    onSubmit: { sendMessage() }
+                )
+                .frame(minHeight: 36, maxHeight: 120)
             }
+            .padding(.horizontal, spacing.sm)
+            .padding(.vertical, spacing.xs)
+            .background(colors.surfaceVariant.opacity(0.3))
+            .clipShape(RoundedRectangle(cornerRadius: radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius.lg)
+                    .stroke(colors.outlineVariant.opacity(0.3), lineWidth: 0.5)
+            )
+
+            // Send / Stop button
+            actionButton
         }
-        .padding()
+        .padding(.horizontal, spacing.lg)
+        .padding(.vertical, spacing.md)
+        .background(colors.surface)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("メッセージ入力")
+    }
+
+    @ViewBuilder
+    private var actionButton: some View {
+        if session.isProcessing {
+            Button {
+                Task { await session.interrupt() }
+            } label: {
+                Image(systemName: "stop.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(colors.error)
+                    .symbolEffect(.pulse, options: .repeating)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("応答を停止")
+        } else {
+            Button {
+                sendMessage()
+            } label: {
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(cannotSend ? colors.onSurfaceVariant.opacity(0.3) : colors.primary)
+            }
+            .buttonStyle(.plain)
+            .disabled(cannotSend)
+            .accessibilityLabel("送信")
+            .accessibilityHint(cannotSend ? "メッセージを入力してください" : "メッセージを送信します")
+        }
     }
 
     private var cannotSend: Bool {

@@ -29,8 +29,6 @@ targets:
       - path: Resources
     entitlements:
       path: App/ClaudeAgent.entitlements
-      properties:
-        com.apple.security.app-sandbox: false
     settings:
       base:
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
