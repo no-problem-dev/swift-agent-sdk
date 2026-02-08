@@ -67,8 +67,6 @@ struct ClaudeCodeTransportTests {
     func testConnectWithMockCLI() async throws {
         let scriptURL = try createMockScript("""
         #!/bin/sh
-        echo '{"type":"initialize_ready"}'
-        read -r input
         echo '{"type":"system","session_id":"test_sess","tools":[],"model":"test-model","mcp_servers":[]}'
         """)
         defer { try? FileManager.default.removeItem(at: scriptURL) }
@@ -87,11 +85,9 @@ struct ClaudeCodeTransportTests {
     func testPostHandshakeMessages() async throws {
         let scriptURL = try createMockScript("""
         #!/bin/sh
-        echo '{"type":"initialize_ready"}'
-        read -r input
         echo '{"type":"system","session_id":"sess","tools":[],"model":"m","mcp_servers":[]}'
         echo '{"type":"assistant","message":{"content":[{"type":"text","text":"Hello"}]},"parent_tool_use_id":null}'
-        echo '{"type":"result","result":"done","cost_usd":0.01,"duration_ms":100,"input_tokens":10,"output_tokens":5,"session_id":"sess","num_turns":1}'
+        echo '{"type":"result","result":"done","total_cost_usd":0.01,"duration_ms":100,"usage":{"input_tokens":10,"output_tokens":5},"session_id":"sess","num_turns":1}'
         """)
         defer { try? FileManager.default.removeItem(at: scriptURL) }
 
@@ -121,8 +117,6 @@ struct ClaudeCodeTransportTests {
     func testConnectTwice() async throws {
         let scriptURL = try createMockScript("""
         #!/bin/sh
-        echo '{"type":"initialize_ready"}'
-        read -r input
         echo '{"type":"system","session_id":"sess","tools":[],"model":"m","mcp_servers":[]}'
         sleep 1
         """)

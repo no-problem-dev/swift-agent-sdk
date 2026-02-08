@@ -11,6 +11,7 @@ struct CLIArgBuilderTests {
         let options = QueryOptions()
         let args = CLIArgBuilder.buildArguments(from: options)
 
+        #expect(args.contains("-p"))
         #expect(args.contains("--output-format"))
         #expect(args.contains("stream-json"))
         #expect(args.contains("--input-format"))
@@ -22,7 +23,7 @@ struct CLIArgBuilderTests {
         let options = QueryOptions()
         let args = CLIArgBuilder.buildArguments(from: options)
 
-        let expected = ["--output-format", "stream-json", "--input-format", "stream-json", "--verbose"]
+        let expected = ["-p", "--output-format", "stream-json", "--input-format", "stream-json", "--verbose"]
         #expect(args == expected)
     }
 
@@ -134,6 +135,7 @@ struct CLIArgBuilderTests {
         let args = CLIArgBuilder.buildArguments(from: options, resumeSessionId: "resume-123")
 
         // Check all expected arguments are present
+        #expect(args.contains("-p"))
         #expect(args.contains("--output-format"))
         #expect(args.contains("stream-json"))
         #expect(args.contains("--input-format"))

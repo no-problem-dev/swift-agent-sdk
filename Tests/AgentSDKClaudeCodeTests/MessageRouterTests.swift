@@ -100,12 +100,15 @@ struct MessageRouterTests {
 
         let cliMsg = CLIMessage.result(CLIResultMessage(
             result: "Task completed",
-            costUsd: 0.05,
+            totalCostUsd: 0.05,
             durationMs: 1500,
-            inputTokens: 100,
-            outputTokens: 50,
+            usage: .init(inputTokens: 100, outputTokens: 50),
             sessionId: "sess_test",
-            numTurns: 3
+            numTurns: 3,
+            subtype: nil,
+            uuid: nil,
+            isError: nil,
+            durationApiMs: nil
         ))
         await router.route(cliMsg)
         await router.finish()
@@ -141,7 +144,9 @@ struct MessageRouterTests {
             mcpServers: [
                 .object(["name": .string("server1"), "status": .string("connected")]),
                 .object(["name": .string("server2")])
-            ]
+            ],
+            subtype: nil,
+            uuid: nil
         ))
         await router.route(cliMsg)
         await router.finish()
@@ -168,6 +173,78 @@ struct MessageRouterTests {
         #expect(info.mcpServers[0].status == "connected")
         #expect(info.mcpServers[1].name == "server2")
         #expect(info.mcpServers[1].status == "unknown") // default
+    }
+
+    @Test("System message converts tools from string array (CLI v2.x format)")
+    func testSystemMessageWithStringTools() async throws {
+        let (writeFn, _) = mockWriteCapture()
+        let router = MessageRouter(write: writeFn)
+        let stream = await router.makeStream()
+
+        // CLI v2.x sends tools as plain strings
+        let cliMsg = CLIMessage.system(CLISystemMessage(
+            sessionId: "sess_v2",
+            tools: [
+                .string("Bash"),
+                .string("Read"),
+                .string("Write"),
+                .string("Task")
+            ],
+            model: "claude-opus-4-6",
+            mcpServers: [],
+            subtype: "init",
+            uuid: nil
+        ))
+        await router.route(cliMsg)
+        await router.finish()
+
+        let messages = try await collectMessages(from: stream)
+        #expect(messages.count == 1)
+
+        guard case .system(let info) = messages[0] else {
+            Issue.record("Expected system message"); return
+        }
+        #expect(info.tools.count == 4)
+        #expect(info.tools[0].name == "Bash")
+        #expect(info.tools[0].description == nil)
+        #expect(info.tools[1].name == "Read")
+        #expect(info.tools[2].name == "Write")
+        #expect(info.tools[3].name == "Task")
+    }
+
+    @Test("Messages are buffered when no stream is active")
+    func testMessageBuffering() async throws {
+        let (writeFn, _) = mockWriteCapture()
+        let router = MessageRouter(write: writeFn)
+
+        // Route messages BEFORE creating a stream
+        await router.route(.system(CLISystemMessage(
+            sessionId: "sess_buf",
+            tools: [],
+            model: "m",
+            mcpServers: [],
+            subtype: nil,
+            uuid: nil
+        )))
+        await router.route(.assistant(CLIAssistantMessage(
+            message: .init(content: [
+                .object(["type": .string("text"), "text": .string("Buffered")])
+            ]),
+            parentToolUseId: nil
+        )))
+
+        // NOW create the stream — buffered messages should be flushed
+        let stream = await router.makeStream()
+        await router.finish()
+
+        let messages = try await collectMessages(from: stream)
+        #expect(messages.count == 2)
+        guard case .system = messages[0] else {
+            Issue.record("Expected system message"); return
+        }
+        guard case .assistant = messages[1] else {
+            Issue.record("Expected assistant message"); return
+        }
     }
 
     @Test("Partial assistant message is yielded to stream")
@@ -212,8 +289,10 @@ struct MessageRouterTests {
             parentToolUseId: nil
         )))
         await router.route(.result(CLIResultMessage(
-            result: "Done", costUsd: 0.01, durationMs: 500,
-            inputTokens: 10, outputTokens: 5, sessionId: "sess", numTurns: 1
+            result: "Done", totalCostUsd: 0.01, durationMs: 500,
+            usage: .init(inputTokens: 10, outputTokens: 5),
+            sessionId: "sess", numTurns: 1,
+            subtype: nil, uuid: nil, isError: nil, durationApiMs: nil
         )))
         await router.finish()
 
@@ -232,11 +311,28 @@ struct MessageRouterTests {
         let stream = await router.makeStream()
 
         await router.route(.unknown(type: "some_future_type"))
-        await router.route(.initializeReady) // Also ignored during normal routing
         await router.finish()
 
         let messages = try await collectMessages(from: stream)
         #expect(messages.isEmpty)
+    }
+
+    @Test("Stream event is routed as partial message")
+    func testStreamEventRouting() async throws {
+        let (writeFn, _) = mockWriteCapture()
+        let router = MessageRouter(write: writeFn)
+        let stream = await router.makeStream()
+
+        await router.route(.streamEvent(CLIStreamEvent(
+            event: .object(["type": .string("content_block_delta")])
+        )))
+        await router.finish()
+
+        let messages = try await collectMessages(from: stream)
+        #expect(messages.count == 1)
+        guard case .partial = messages[0] else {
+            Issue.record("Expected partial message"); return
+        }
     }
 
     // MARK: - can_use_tool Tests

@@ -20,6 +20,7 @@ internal actor MessageRouter {
     private var requestCounter: UInt64 = 0
     private var pendingRequests: [String: PendingRequest] = [:]
     private var messageContinuation: AsyncThrowingStream<AgentMessage, Error>.Continuation?
+    private var pendingMessages: [AgentMessage] = []
 
     private struct PendingRequest {
         let continuation: CheckedContinuation<CLIControlResponse, Error>
@@ -38,33 +39,41 @@ internal actor MessageRouter {
 
     // MARK: - Message Stream
 
-    /// Create the output message stream. Call once before routing.
+    /// Create the output message stream.
+    ///
+    /// Any messages that arrived before this call are flushed immediately.
+    /// This allows CLI messages to be buffered when no consumer is listening
+    /// (e.g. between session creation and the first ``ClaudeCodeSession/send(_:)``).
     func makeStream() -> AsyncThrowingStream<AgentMessage, Error> {
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: AgentMessage.self)
         self.messageContinuation = continuation
+        // Flush any messages that arrived before the stream was created
+        for msg in pendingMessages {
+            continuation.yield(msg)
+        }
+        pendingMessages.removeAll()
         return stream
     }
 
     // MARK: - Message Routing
 
     /// Route a single CLIMessage through the router.
+    ///
+    /// If no consumer stream is active (``makeStream()`` not yet called),
+    /// messages are buffered and flushed on the next ``makeStream()`` call.
     func route(_ message: CLIMessage) async {
         switch message {
-        case .initializeReady:
-            // Ignored during normal routing (handled by Handshake)
-            break
-
         case .system(let sysMsg):
-            messageContinuation?.yield(convertSystemMessage(sysMsg))
+            yieldOrBuffer(convertSystemMessage(sysMsg))
 
         case .assistant(let asstMsg):
-            messageContinuation?.yield(convertAssistantMessage(asstMsg))
+            yieldOrBuffer(convertAssistantMessage(asstMsg))
 
         case .partialAssistant(let partialMsg):
-            messageContinuation?.yield(convertPartialMessage(partialMsg))
+            yieldOrBuffer(convertPartialMessage(partialMsg))
 
         case .result(let resultMsg):
-            messageContinuation?.yield(convertResultMessage(resultMsg))
+            yieldOrBuffer(convertResultMessage(resultMsg))
 
         case .controlRequest(let ctrlReq):
             await handleControlRequest(ctrlReq)
@@ -72,9 +81,21 @@ internal actor MessageRouter {
         case .controlResponse(let ctrlResp):
             handleControlResponse(ctrlResp)
 
+        case .streamEvent(let event):
+            yieldOrBuffer(convertStreamEvent(event))
+
         case .unknown:
             // Ignore unknown message types
             break
+        }
+    }
+
+    /// Yield a message to the active stream, or buffer it if no stream exists.
+    private func yieldOrBuffer(_ message: AgentMessage) {
+        if let cont = messageContinuation {
+            cont.yield(message)
+        } else {
+            pendingMessages.append(message)
         }
     }
 
@@ -255,27 +276,38 @@ internal actor MessageRouter {
     private func convertResultMessage(_ msg: CLIResultMessage) -> AgentMessage {
         .result(ResultInfo(
             result: msg.result,
-            costUsd: msg.costUsd,
+            costUsd: msg.totalCostUsd,
             durationMs: msg.durationMs,
-            inputTokens: msg.inputTokens,
-            outputTokens: msg.outputTokens,
+            inputTokens: msg.usage.inputTokens,
+            outputTokens: msg.usage.outputTokens,
             sessionId: msg.sessionId,
             numTurns: msg.numTurns
         ))
     }
 
+    private func convertStreamEvent(_ event: CLIStreamEvent) -> AgentMessage {
+        // Map stream events to partial messages for streaming support
+        .partial(PartialInfo(content: []))
+    }
+
     private func convertToolInfo(_ value: JSONValue) -> ToolInfo? {
-        guard case .object(let dict) = value,
-              case .string(let name) = dict["name"] else {
+        switch value {
+        // CLI v2.x sends tools as plain strings: ["Bash", "Task", ...]
+        case .string(let name):
+            return ToolInfo(name: name, description: nil)
+        // Older format or extended info: [{"name": "Bash", "description": "..."}]
+        case .object(let dict):
+            guard case .string(let name) = dict["name"] else { return nil }
+            let description: String?
+            if case .string(let d) = dict["description"] {
+                description = d
+            } else {
+                description = nil
+            }
+            return ToolInfo(name: name, description: description)
+        default:
             return nil
         }
-        let description: String?
-        if case .string(let d) = dict["description"] {
-            description = d
-        } else {
-            description = nil
-        }
-        return ToolInfo(name: name, description: description)
     }
 
     private func convertMCPServerInfo(_ value: JSONValue) -> MCPServerInfo? {

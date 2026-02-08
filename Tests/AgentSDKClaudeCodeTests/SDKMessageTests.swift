@@ -13,8 +13,20 @@ struct SDKMessageTests {
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
         #expect(json != nil)
-        #expect(json?["type"] as? String == "user_message")
-        #expect(json?["content"] as? String == "hello")
+        #expect(json?["type"] as? String == "user")
+
+        if let messageBody = json?["message"] as? [String: Any] {
+            #expect(messageBody["role"] as? String == "user")
+            if let content = messageBody["content"] as? [[String: Any]] {
+                #expect(content.count == 1)
+                #expect(content[0]["type"] as? String == "text")
+                #expect(content[0]["text"] as? String == "hello")
+            } else {
+                Issue.record("Expected content array in message")
+            }
+        } else {
+            Issue.record("Expected message field in JSON")
+        }
     }
 
     @Test("Encode control request")

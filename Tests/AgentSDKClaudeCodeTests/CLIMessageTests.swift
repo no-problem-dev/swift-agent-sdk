@@ -6,20 +6,6 @@ import AgentSDK
 @Suite("CLIMessage Decoding Tests")
 struct CLIMessageTests {
 
-    @Test("Decode initialize_ready message")
-    func decodeInitializeReady() throws {
-        let json = """
-        {"type":"initialize_ready"}
-        """
-        let data = json.data(using: .utf8)!
-        let message = try JSONDecoder().decode(CLIMessage.self, from: data)
-
-        guard case .initializeReady = message else {
-            Issue.record("Expected .initializeReady, got \(message)")
-            return
-        }
-    }
-
     @Test("Decode system message")
     func decodeSystemMessage() throws {
         let json = """
@@ -45,16 +31,44 @@ struct CLIMessageTests {
         #expect(systemMsg.mcpServers.count == 1)
     }
 
+    @Test("Decode system message with subtype init")
+    func decodeSystemMessageWithSubtype() throws {
+        let json = """
+        {
+            "type": "system",
+            "subtype": "init",
+            "uuid": "abc-123",
+            "session_id": "test-session-456",
+            "tools": [],
+            "model": "claude-opus-4-6",
+            "mcp_servers": []
+        }
+        """
+        let data = json.data(using: .utf8)!
+        let message = try JSONDecoder().decode(CLIMessage.self, from: data)
+
+        guard case .system(let systemMsg) = message else {
+            Issue.record("Expected .system, got \(message)")
+            return
+        }
+
+        #expect(systemMsg.sessionId == "test-session-456")
+        #expect(systemMsg.subtype == "init")
+        #expect(systemMsg.uuid == "abc-123")
+    }
+
     @Test("Decode result message")
     func decodeResultMessage() throws {
         let json = """
         {
             "type": "result",
             "result": "success",
-            "cost_usd": 0.05,
+            "total_cost_usd": 0.05,
             "duration_ms": 1500,
-            "input_tokens": 100,
-            "output_tokens": 200,
+            "usage": {
+                "input_tokens": 100,
+                "output_tokens": 200
+            },
             "session_id": "session-456",
             "num_turns": 5
         }
@@ -68,12 +82,46 @@ struct CLIMessageTests {
         }
 
         #expect(resultMsg.result == "success")
-        #expect(resultMsg.costUsd == 0.05)
+        #expect(resultMsg.totalCostUsd == 0.05)
         #expect(resultMsg.durationMs == 1500)
-        #expect(resultMsg.inputTokens == 100)
-        #expect(resultMsg.outputTokens == 200)
+        #expect(resultMsg.usage.inputTokens == 100)
+        #expect(resultMsg.usage.outputTokens == 200)
         #expect(resultMsg.sessionId == "session-456")
         #expect(resultMsg.numTurns == 5)
+    }
+
+    @Test("Decode result message with optional fields")
+    func decodeResultMessageWithOptionalFields() throws {
+        let json = """
+        {
+            "type": "result",
+            "subtype": "final",
+            "uuid": "result-uuid-789",
+            "result": "done",
+            "total_cost_usd": 0.10,
+            "duration_ms": 2000,
+            "usage": {
+                "input_tokens": 150,
+                "output_tokens": 300
+            },
+            "session_id": "session-789",
+            "num_turns": 3,
+            "is_error": false,
+            "duration_api_ms": 1800
+        }
+        """
+        let data = json.data(using: .utf8)!
+        let message = try JSONDecoder().decode(CLIMessage.self, from: data)
+
+        guard case .result(let resultMsg) = message else {
+            Issue.record("Expected .result, got \(message)")
+            return
+        }
+
+        #expect(resultMsg.subtype == "final")
+        #expect(resultMsg.uuid == "result-uuid-789")
+        #expect(resultMsg.isError == false)
+        #expect(resultMsg.durationApiMs == 1800)
     }
 
     @Test("Decode control request message")
@@ -187,5 +235,28 @@ struct CLIMessageTests {
         #expect(ctrlResp.response.subtype == "initialize")
         #expect(ctrlResp.response.requestId == "req-456")
         #expect(ctrlResp.response.response != nil)
+    }
+
+    @Test("Decode stream event message")
+    func decodeStreamEvent() throws {
+        let json = """
+        {
+            "type": "stream_event",
+            "event": {"type": "content_block_delta", "delta": {"text": "hello"}}
+        }
+        """
+        let data = json.data(using: .utf8)!
+        let message = try JSONDecoder().decode(CLIMessage.self, from: data)
+
+        guard case .streamEvent(let event) = message else {
+            Issue.record("Expected .streamEvent, got \(message)")
+            return
+        }
+
+        if case .object(let dict) = event.event {
+            #expect(dict["type"] == .string("content_block_delta"))
+        } else {
+            Issue.record("Expected object event")
+        }
     }
 }

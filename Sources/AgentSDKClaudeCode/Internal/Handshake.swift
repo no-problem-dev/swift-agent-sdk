@@ -21,9 +21,11 @@ internal struct Handshake: Sendable {
 
     /// Perform the handshake on a message stream.
     ///
+    /// CLI v2.x protocol: wait for the first `system` message.
+    ///
     /// - Parameters:
     ///   - stream: Stream of JSONL Data lines from CLI stdout
-    ///   - write: Closure to write data to CLI stdin
+    ///   - write: Closure to write data to CLI stdin (unused in v2.x but kept for API compatibility)
     /// - Returns: Handshake result with session info
     /// - Throws: AgentSDKError.initializationTimeout, .protocolError
     func perform(
@@ -37,9 +39,9 @@ internal struct Handshake: Sendable {
                 return .timeout
             }
 
-            // Main handshake task
+            // Main handshake task: wait for first system message
             group.addTask {
-                try await self.executeHandshake(stream: stream, write: write)
+                try await self.waitForSystemMessage(stream: stream)
             }
 
             // Wait for first result
@@ -62,48 +64,11 @@ internal struct Handshake: Sendable {
         }
     }
 
-    /// Execute the three-phase handshake protocol
-    private func executeHandshake(
-        stream: AsyncThrowingStream<Data, Error>,
-        write: @escaping @Sendable (Data) async throws -> Void
+    /// Wait for the first system message from CLI v2.x
+    private func waitForSystemMessage(
+        stream: AsyncThrowingStream<Data, Error>
     ) async throws -> HandshakePhase {
-        var iterator = stream.makeAsyncIterator()
-
-        // Phase 1: Wait for initialize_ready
-        var readyReceived = false
-        while let line = try await iterator.next() {
-            let msg: CLIMessage = try codec.decode(line)
-            if case .initializeReady = msg {
-                readyReceived = true
-                break
-            }
-        }
-
-        guard readyReceived else {
-            throw AgentSDKError.protocolError(
-                message: "Stream ended before receiving initialize_ready",
-                rawData: nil
-            )
-        }
-
-        // Phase 2: Send InitializeRequest
-        let initRequest = SDKMessage.controlRequest(SDKControlRequest(
-            requestId: "req_1_init",
-            request: SDKControlRequest.RequestPayload(
-                subtype: "initialize",
-                supportedCapabilities: ["mcp"],
-                hooks: [],
-                permissionMode: nil,
-                model: nil,
-                userMessageUuid: nil,
-                mcpServers: nil
-            )
-        ))
-        let requestData = try codec.encode(initRequest)
-        try await write(requestData)
-
-        // Phase 3: Wait for SystemMessage
-        while let line = try await iterator.next() {
+        for try await line in stream {
             let msg: CLIMessage = try codec.decode(line)
             if case .system(let sysMsg) = msg {
                 return .success(Result(
@@ -116,7 +81,7 @@ internal struct Handshake: Sendable {
         }
 
         throw AgentSDKError.protocolError(
-            message: "Expected system message after initialize request, but stream ended",
+            message: "Stream ended before receiving system message",
             rawData: nil
         )
     }

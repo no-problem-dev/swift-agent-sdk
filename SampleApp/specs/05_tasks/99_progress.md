@@ -37,9 +37,9 @@ references:
 | T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
 | T23 | Implement Store ロジック完全実装 | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
 | T24 | Test Presentation Unit Test | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
-| T25 | Implement DI ワイヤリング + 統合ビルド | pending | - | - |
-| T26 | Verify Integration Test + E2E テスト | pending | - | - |
-| T27 | QA Manual QA + 最終調整 + README | pending | - | - |
+| T25 | Implement DI ワイヤリング + 統合ビルド | done | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
+| T26 | Verify Integration Test + E2E テスト | pending | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
+| T27 | QA Manual QA + 最終調整 + README | done | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
 
 ## Phase 進捗サマリー
 
@@ -49,8 +49,8 @@ references:
 | Phase 2 | 6 | 6 | 100% |
 | Phase 3 | 5 | 5 | 100% |
 | Phase 4 | 8 | 8 | 100% |
-| Phase 5 | 0 | 3 | 0% |
-| **合計** | **24** | **27** | **89%** |
+| Phase 5 | 2 | 3 | 67% |
+| **合計** | **26** | **27** | **96%** |
 
 ## ブランチ戦略
 
@@ -82,3 +82,5 @@ references:
 | 2026-02-08 | Phase 2 (T6-T11) 完了 |
 | 2026-02-08 | Phase 3 (T12-T16) 完了 |
 | 2026-02-08 | Phase 4 (T17-T24) 完了 |
+| 2026-02-08 | T25 完了 (DI ワイヤリング + 統合ビルド) |
+| 2026-02-08 | T27 完了 (README + NFR検証: 2,435行、警告ゼロ) |
