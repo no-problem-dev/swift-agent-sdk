@@ -2,10 +2,12 @@ import SwiftUI
 import Domain
 import Infrastructure
 import Presentation
+import DesignSystem
 
 @main
 struct ClaudeAgentApp: App {
     @State private var appState: AppState
+    @State private var themeProvider = ThemeProvider()
 
     init() {
         let agentService = ServiceFactory.makeAgentService()
@@ -20,6 +22,7 @@ struct ClaudeAgentApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(appState: appState)
+                .theme(themeProvider)
                 .frame(minWidth: 800, minHeight: 600)
                 .onAppear {
                     appState.loadSavedSessions()
