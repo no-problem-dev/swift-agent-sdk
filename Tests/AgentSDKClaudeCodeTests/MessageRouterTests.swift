@@ -3,7 +3,7 @@ import Foundation
 @testable import AgentSDKClaudeCode
 import AgentSDK
 
-@Suite("MessageRouter Tests")
+@Suite("MessageRouter Tests", .serialized)
 struct MessageRouterTests {
 
     // MARK: - Helpers

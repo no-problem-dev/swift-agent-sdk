@@ -20,9 +20,15 @@ final class MockTransport: AgentTransport, @unchecked Sendable {
         self.scheduledResponses = responses
     }
 
+    /// Set to true to make connect() throw an error.
+    var simulatedConnectFailure = false
+
     // MARK: - AgentTransport
 
     func connect() async throws {
+        if simulatedConnectFailure {
+            throw AgentSDKError.notConnected
+        }
         lock.withLock { _connected = true }
     }
 
