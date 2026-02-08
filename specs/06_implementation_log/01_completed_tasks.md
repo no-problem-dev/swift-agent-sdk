@@ -237,3 +237,17 @@ references:
   - README 使用例は実際の API シグネチャと整合するよう記述
 - **変更ファイル**:
   - README.md (新規)
+
+### T25: Configure GitHub Actions CI
+- **完了日**: 2026-02-08
+- **コミット**: (pending)
+- **実装内容**: GitHub Actions ワークフロー 2 ファイル（test.yml + integration.yml）
+- **判断事項**:
+  - test.yml: テストターゲットを個別実行（`swift test` 全体実行のハング問題の回避策）
+  - test.yml: push/PR で自動実行、concurrency で重複ジョブをキャンセル
+  - integration.yml: 手動(workflow_dispatch) + 週次スケジュール
+  - integration.yml: Node.js 18 + Claude Code CLI インストール + env var ゲート
+  - macos-15 ランナーを使用（Swift 6.0 対応）
+- **変更ファイル**:
+  - .github/workflows/test.yml (新規)
+  - .github/workflows/integration.yml (新規)
