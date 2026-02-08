@@ -37,9 +37,9 @@ references:
 | T22 | Create ToolUseCard + ToolResultCard + NewSessionSheet | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
 | T23 | Implement Store ロジック完全実装 | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
 | T24 | Test Presentation Unit Test | done | feat/p4-w1-stores-views | [#6](https://github.com/no-problem-dev/swift-agent-sdk/pull/6) |
-| T25 | Implement DI ワイヤリング + 統合ビルド | done | feat/p5-integration | - |
-| T26 | Verify Integration Test + E2E テスト | pending | feat/p5-integration | - |
-| T27 | QA Manual QA + 最終調整 + README | done | feat/p5-integration | - |
+| T25 | Implement DI ワイヤリング + 統合ビルド | done | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
+| T26 | Verify Integration Test + E2E テスト | pending | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
+| T27 | QA Manual QA + 最終調整 + README | done | feat/p5-integration | [#7](https://github.com/no-problem-dev/swift-agent-sdk/pull/7) |
 
 ## Phase 進捗サマリー
 
