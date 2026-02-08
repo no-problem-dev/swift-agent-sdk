@@ -6,7 +6,6 @@ import DesignSystem
 struct InputArea: View {
     @Bindable var session: SessionState
     @State private var text: String = ""
-    @FocusState private var isFocused: Bool
     @Environment(\.colorPalette) private var colors
     @Environment(\.spacingScale) private var spacing
     @Environment(\.radiusScale) private var radius
@@ -14,33 +13,26 @@ struct InputArea: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: spacing.sm) {
-            // Text input with placeholder
+            // Text input (NSTextView ベース)
             ZStack(alignment: .topLeading) {
-                // Placeholder - offset to match TextEditor internal insets
+                // プレースホルダー
                 if text.isEmpty {
                     Text("Claudeにメッセージを送信...")
                         .font(.body)
                         .foregroundStyle(colors.onSurfaceVariant.opacity(0.4))
-                        .padding(.leading, 5)
-                        .padding(.top, 8)
+                        .padding(.leading, 4)
+                        .padding(.top, 4)
                         .allowsHitTesting(false)
                 }
 
-                TextEditor(text: $text)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .frame(minHeight: 36, maxHeight: 120)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .focused($isFocused)
-                    .onKeyPress(.return, phases: .down) { keyPress in
-                        if keyPress.modifiers.contains(.shift) {
-                            // Shift+Enter → 改行（TextEditorに処理を委譲）
-                            return .ignored
-                        }
-                        // Enter → 送信
-                        sendMessage()
-                        return .handled
-                    }
+                ChatTextView(
+                    text: $text,
+                    font: .systemFont(ofSize: NSFont.systemFontSize),
+                    maxHeight: 120,
+                    isEnabled: session.status == .connected,
+                    onSubmit: { sendMessage() }
+                )
+                .frame(minHeight: 36, maxHeight: 120)
             }
             .padding(.horizontal, spacing.sm)
             .padding(.vertical, spacing.xs)
@@ -48,11 +40,7 @@ struct InputArea: View {
             .clipShape(RoundedRectangle(cornerRadius: radius.lg))
             .overlay(
                 RoundedRectangle(cornerRadius: radius.lg)
-                    .stroke(
-                        isFocused ? colors.primary.opacity(0.5) : colors.outlineVariant.opacity(0.3),
-                        lineWidth: isFocused ? 1.5 : 0.5
-                    )
-                    .animate(motion.toggle, value: isFocused)
+                    .stroke(colors.outlineVariant.opacity(0.3), lineWidth: 0.5)
             )
 
             // Send / Stop button
