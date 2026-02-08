@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import Domain
 import DesignSystem
 
@@ -40,5 +41,12 @@ public struct ContentView: View {
         .sheet(isPresented: $showingNewSession) {
             NewSessionSheet(appState: appState)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showNewSessionSheet)) { _ in
+            showingNewSession = true
+        }
     }
+}
+
+extension Notification.Name {
+    public static let showNewSessionSheet = Notification.Name("showNewSessionSheet")
 }
