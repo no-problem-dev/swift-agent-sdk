@@ -14,16 +14,18 @@ struct InputArea: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: spacing.sm) {
-            // Text input
+            // Text input with placeholder
             ZStack(alignment: .topLeading) {
+                // Placeholder - offset to match TextEditor internal insets
                 if text.isEmpty {
                     Text("Claudeにメッセージを送信...")
-                        .typography(.bodyMedium)
+                        .font(.body)
                         .foregroundStyle(colors.onSurfaceVariant.opacity(0.4))
-                        .padding(.horizontal, spacing.xs)
-                        .padding(.vertical, spacing.sm)
+                        .padding(.leading, 5)
+                        .padding(.top, 8)
                         .allowsHitTesting(false)
                 }
+
                 TextEditor(text: $text)
                     .font(.body)
                     .scrollContentBackground(.hidden)
@@ -32,8 +34,10 @@ struct InputArea: View {
                     .focused($isFocused)
                     .onKeyPress(.return, phases: .down) { keyPress in
                         if keyPress.modifiers.contains(.shift) {
+                            // Shift+Enter → 改行（TextEditorに処理を委譲）
                             return .ignored
                         }
+                        // Enter → 送信
                         sendMessage()
                         return .handled
                     }
