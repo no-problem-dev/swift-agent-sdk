@@ -140,7 +140,9 @@ public final class AgentService: AgentServiceProtocol, @unchecked Sendable {
     ) -> [String] {
         var args: [String] = []
 
-        // 必須引数: JSONL ストリームモード
+        // 必須引数: 非インタラクティブモード + JSONL ストリーム
+        // ネイティブ CLI は --print なしでは --output-format/--input-format が無効
+        args.append("-p")
         args.append(contentsOf: ["--output-format", "stream-json"])
         args.append(contentsOf: ["--input-format", "stream-json"])
         args.append("--verbose")
