@@ -226,3 +226,14 @@ references:
   - `permissionMode: .bypassPermissions, maxTurns: 1` で安全な実行を担保
 - **変更ファイル**:
   - Tests/IntegrationTests/IntegrationTests.swift (プレースホルダから本テストに置換)
+
+### T24: Create README + DocC コメント整備
+- **完了日**: 2026-02-08
+- **コミット**: (pending)
+- **実装内容**: README.md 作成（Quick Start 7行、インストール、前提条件、使用例5セクション、カスタマイズ、アーキテクチャ、API リファレンス、バージョン互換表）
+- **判断事項**:
+  - DocC コメントは既に全 public API に付与済みのため追加不要
+  - swift-docc-plugin は未導入（T25 CI で検討可能）
+  - README 使用例は実際の API シグネチャと整合するよう記述
+- **変更ファイル**:
+  - README.md (新規)

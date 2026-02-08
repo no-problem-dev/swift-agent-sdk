@@ -16,8 +16,8 @@ references:
 | Phase 1: 基盤構築 | 8 | 8 | 100% |
 | Phase 2: CLI 具象 | 6 | 6 | 100% |
 | Phase 3: クライアント | 5 | 5 | 100% |
-| Phase 4: テスト・統合 | 4 | 6 | 67% |
-| **合計** | **23** | **25** | **92%** |
+| Phase 4: テスト・統合 | 5 | 6 | 83% |
+| **合計** | **24** | **25** | **96%** |
 
 ## Phase 4 詳細
 
@@ -27,7 +27,7 @@ references:
 | T21 MockFixtures | DONE | Yes (`e05776b`) |
 | T22 Test ClaudeCodeClient w/ Mock | DONE | Yes (`6f3762c`) |
 | T23 EndToEnd Integration Tests | DONE | Yes (pending) |
-| T24 README + DocC | TODO | - |
+| T24 README + DocC | DONE | Yes (pending) |
 | T25 GitHub Actions CI | TODO | - |
 
 ## 未解決課題
