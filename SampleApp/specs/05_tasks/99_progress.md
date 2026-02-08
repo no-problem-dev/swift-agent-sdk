@@ -24,11 +24,11 @@ references:
 | T9 | Implement Domain プロトコル | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T10 | Implement Domain AppError | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
 | T11 | Test Domain 総合テスト + クリーンアップ | done | feat/p2-domain | [#4](https://github.com/no-problem-dev/swift-agent-sdk/pull/4) |
-| T12 | Implement AgentMessageMapper | pending | - | - |
-| T13 | Implement AgentService 骨格 | pending | - | - |
-| T14 | Implement JSONSessionStore | pending | - | - |
-| T15 | Implement AgentService 完全実装 | pending | - | - |
-| T16 | Test AgentService Integration Test | pending | - | - |
+| T12 | Implement AgentMessageMapper | done | feat/p3-infrastructure | - |
+| T13 | Implement AgentService 骨格 | done | feat/p3-infrastructure | - |
+| T14 | Implement JSONSessionStore | done | feat/p3-infrastructure | - |
+| T15 | Implement AgentService 完全実装 | done | feat/p3-infrastructure | - |
+| T16 | Test AgentService Integration Test | done | feat/p3-infrastructure | - |
 | T17 | Implement AppState + SessionState 骨格 | pending | - | - |
 | T18 | Create ContentView + EmptySessionView | pending | - | - |
 | T19 | Create SessionSidebar + SessionRow + StatusBadge | pending | - | - |
@@ -47,10 +47,10 @@ references:
 |-------|----------|---------|--------|
 | Phase 1 | 5 | 5 | 100% |
 | Phase 2 | 6 | 6 | 100% |
-| Phase 3 | 0 | 5 | 0% |
+| Phase 3 | 5 | 5 | 100% |
 | Phase 4 | 0 | 8 | 0% |
 | Phase 5 | 0 | 3 | 0% |
-| **合計** | **11** | **27** | **41%** |
+| **合計** | **16** | **27** | **59%** |
 
 ## ブランチ戦略
 
@@ -81,3 +81,4 @@ references:
 | 2026-02-08 | 初版作成 |
 | 2026-02-08 | Phase 1 (T1-T5) 完了 |
 | 2026-02-08 | Phase 2 (T6-T11) 完了 |
+| 2026-02-08 | Phase 3 (T12-T16) 完了 |
