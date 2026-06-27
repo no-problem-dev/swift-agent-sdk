@@ -12,6 +12,9 @@ let package = Package(
         .library(name: "AgentSDKClaudeCode", targets: ["AgentSDKClaudeCode"]),
         .library(name: "AgentSDKTesting", targets: ["AgentSDKTesting"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.0"),
+    ],
     targets: [
         // Protocol layer
         .target(
