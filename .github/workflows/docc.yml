@@ -33,7 +33,8 @@ jobs:
         run: |
           swift package --allow-writing-to-directory ./docs \
             generate-documentation \
-            --target AgentSDK \
+            --enable-experimental-combined-documentation \
+            --target AgentSDK --target AgentSDKClaudeCode --target AgentSDKTesting \
             --disable-indexing \
             --transform-for-static-hosting \
             --hosting-base-path swift-agent-sdk \
