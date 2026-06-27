@@ -9,7 +9,10 @@ import AgentSDKClaudeCode
 
 for try await message in AgentSDK.query(prompt: "Hello, Claude!") {
     switch message {
-    case .assistant(let info): print(info.content)
+    case .assistant(let info):
+        for block in info.content {
+            if case .text(let text) = block { print(text) }
+        }
     case .result(let result): print("Cost: $\(result.costUsd)")
     default: break
     }
@@ -20,7 +23,7 @@ for try await message in AgentSDK.query(prompt: "Hello, Claude!") {
 
 - **macOS 15+** / Swift 6.0+
 - **Node.js 18+**（`node` が PATH に存在すること）
-- **Claude Code CLI**：`npm install -g @anthropic-ai/claude-code`
+- **Claude Code CLI**：`npm install -g @anthropic-ai/claude-agent-sdk`
 - **サブスクリプション認証**：事前に `claude login` で認証を完了してください（API Key は使用しません）
 
 ## インストール
@@ -104,14 +107,18 @@ let session = try await AgentSDK.createSession(
 // 1 ターン目
 for try await msg in session.send("フランスの首都は？") {
     if case .assistant(let info) = msg {
-        print(info.content)
+        for block in info.content {
+            if case .text(let text) = block { print(text) }
+        }
     }
 }
 
 // 2 ターン目（コンテキストが引き継がれる）
 for try await msg in session.send("ドイツは？") {
     if case .assistant(let info) = msg {
-        print(info.content)
+        for block in info.content {
+            if case .text(let text) = block { print(text) }
+        }
     }
 }
 
@@ -216,7 +223,7 @@ for try await msg in client.query(prompt: "テスト") {
         // モックされた応答を検証
         break
     case .result(let info):
-        assert(info.costUsd == 0.001)
+        assert(info.costUsd == 0.01)
     default:
         break
     }

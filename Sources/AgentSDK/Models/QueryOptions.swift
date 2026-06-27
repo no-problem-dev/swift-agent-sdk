@@ -45,6 +45,9 @@ public struct QueryOptions: Sendable {
     public var cwd: String?
 
     /// Expected output format (JSON schema).
+    ///
+    /// - Note: This property is reserved for future use and is not currently forwarded
+    ///   to the CLI as a command-line argument.
     public var outputFormat: JSONValue?
 
     public init(

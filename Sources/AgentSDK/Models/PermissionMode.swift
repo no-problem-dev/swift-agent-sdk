@@ -58,30 +58,3 @@ public enum ModelSelection: Sendable, Codable, Hashable {
     }
 }
 
-/// Information about an available command.
-public struct CommandInfo: Sendable, Codable, Hashable {
-    /// Command name.
-    public let name: String
-
-    /// Command description.
-    public let description: String
-
-    public init(name: String, description: String) {
-        self.name = name
-        self.description = description
-    }
-}
-
-/// Information about an available model.
-public struct ModelInfo: Sendable, Codable, Hashable {
-    /// Model identifier.
-    public let id: String
-
-    /// Human-readable model name.
-    public let name: String?
-
-    public init(id: String, name: String? = nil) {
-        self.id = id
-        self.name = name
-    }
-}

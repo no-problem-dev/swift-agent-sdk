@@ -1,98 +1,98 @@
 import Foundation
 
-/// SDK の公開エラー型。全ケースに解決方法を含むメッセージを提供。
+/// Public error type for Swift Agent SDK. Every case carries a message with resolution guidance.
 ///
-/// このエラー型は、Swift Agent SDK で発生する可能性のあるすべてのエラー状態を表現します。
-/// 各エラーケースには、問題の診断と解決に役立つ詳細な情報が含まれています。
+/// This type represents all error states that can occur in the Swift Agent SDK.
+/// Each case includes detailed information to help diagnose and resolve the issue.
 public enum AgentSDKError: Error, Sendable {
-    /// CLI バイナリが見つからない
+    /// CLI binary was not found.
     ///
-    /// - Parameter searchedPaths: 検索された全パス
+    /// - Parameter searchedPaths: All paths that were searched.
     ///
-    /// Claude Code CLI がシステム上で見つかりませんでした。
-    /// `npm install -g @anthropic-ai/claude-agent-sdk` でインストールしてください。
+    /// The Claude Code CLI could not be found on this system.
+    /// Install it with: `npm install -g @anthropic-ai/claude-agent-sdk`
     case cliNotFound(searchedPaths: [String])
 
-    /// JS ランタイム（Node.js / Bun / Deno）が見つからない
+    /// JavaScript runtime (Node.js / Bun / Deno) was not found.
     ///
-    /// - Parameter runtime: 検索対象のランタイム名
+    /// - Parameter runtime: The runtime name that was searched.
     ///
-    /// 指定された JavaScript ランタイムが PATH 上で見つかりませんでした。
-    /// Node.js 18 以上のインストールが推奨されます。
+    /// The specified JavaScript runtime was not found in PATH.
+    /// Node.js 18 or later is recommended.
     case runtimeNotFound(runtime: String)
 
-    /// CLI プロセスの起動に失敗
+    /// Failed to launch the CLI process.
     ///
-    /// - Parameter underlying: 起動失敗の原因となったエラー
+    /// - Parameter underlying: The underlying error that caused the launch failure.
     ///
-    /// CLI プロセスの `Process.run()` が失敗しました。
-    /// パーミッション、パス、ランタイムの設定を確認してください。
+    /// `Process.run()` for the CLI process failed.
+    /// Check permissions, the executable path, and runtime configuration.
     case processLaunchFailed(underlying: any Error)
 
-    /// CLI プロセスが異常終了
+    /// CLI process exited abnormally.
     ///
     /// - Parameters:
-    ///   - exitCode: プロセスの終了コード
-    ///   - stderr: 標準エラー出力の内容
+    ///   - exitCode: The process exit code.
+    ///   - stderr: Standard error output from the process.
     ///
-    /// CLI プロセスが非ゼロの終了コードで終了しました。
-    /// 認証エラーやバージョン不一致の可能性があります。
+    /// The CLI process terminated with a non-zero exit code.
+    /// This may indicate an authentication error or version mismatch.
     case processExited(exitCode: Int32, stderr: String)
 
-    /// JSONL プロトコルエラー（不正 JSON、予期しないメッセージ）
+    /// JSONL protocol error (malformed JSON or unexpected message).
     ///
     /// - Parameters:
-    ///   - message: エラーの詳細メッセージ
-    ///   - rawData: パースに失敗した生データ（存在する場合）
+    ///   - message: Detailed error message.
+    ///   - rawData: The raw data that failed to parse, if available.
     ///
-    /// CLI からの JSONL メッセージのパースまたは検証に失敗しました。
-    /// SDK と CLI のバージョンが一致していることを確認してください。
+    /// Parsing or validation of a JSONL message from the CLI failed.
+    /// Ensure the SDK and CLI versions are compatible.
     case protocolError(message: String, rawData: Data?)
 
-    /// 初期化タイムアウト
+    /// Initialization timed out.
     ///
-    /// - Parameter seconds: タイムアウトまでの秒数
+    /// - Parameter seconds: The timeout duration in seconds.
     ///
-    /// CLI プロセスが指定時間内に初期化メッセージを返しませんでした。
-    /// ネットワーク接続や CLI の応答性を確認してください。
+    /// The CLI process did not return an initialization message within the allotted time.
+    /// Check network connectivity and CLI responsiveness.
     case initializationTimeout(seconds: Int)
 
-    /// 制御リクエストタイムアウト
+    /// Control request timed out.
     ///
     /// - Parameters:
-    ///   - subtype: タイムアウトしたリクエストの種類
-    ///   - seconds: タイムアウトまでの秒数
+    ///   - subtype: The type of control request that timed out.
+    ///   - seconds: The timeout duration in seconds.
     ///
-    /// 制御リクエスト（createSession, closeSession など）が指定時間内に完了しませんでした。
-    /// CLI の負荷状態やネットワーク環境を確認してください。
+    /// A control request (createSession, closeSession, etc.) did not complete within the allotted time.
+    /// Check CLI load and network conditions.
     case controlRequestTimeout(subtype: String, seconds: Int)
 
-    /// セッションが期限切れ
+    /// Session has expired.
     ///
-    /// - Parameter sessionId: 期限切れとなったセッション ID
+    /// - Parameter sessionId: The ID of the expired session.
     ///
-    /// セッションが非アクティブ期間（デフォルト: 10 分）を超えて期限切れになりました。
-    /// 新しいセッションを作成するか、`resumeSession()` を使用してください。
+    /// The session exceeded the inactivity timeout (default: 10 minutes).
+    /// Create a new session or use `resumeSession()`.
     case sessionExpired(sessionId: String)
 
-    /// セッションが既に閉じている
+    /// Session is already closed.
     ///
-    /// - Parameter sessionId: 閉じられたセッション ID
+    /// - Parameter sessionId: The ID of the closed session.
     ///
-    /// 既にクローズされたセッションに対して操作が試みられました。
-    /// 新しいセッションを作成してください。
+    /// An operation was attempted on a session that has already been closed.
+    /// Create a new session to continue.
     case sessionClosed(sessionId: String)
 
-    /// Transport が未接続
+    /// Transport is not connected.
     ///
-    /// Transport が接続されていない状態でメッセージ送信が試みられました。
-    /// `connect()` を先に呼び出してください。
+    /// A message send was attempted while the transport is not connected.
+    /// Call `connect()` before sending messages.
     case notConnected
 
-    /// キャンセルされた
+    /// Operation was cancelled.
     ///
-    /// タスクまたは操作がユーザーによってキャンセルされました。
-    /// これは `Task.cancel()` や `interrupt()` 呼び出し時の正常な動作です。
+    /// The task or operation was cancelled by the caller.
+    /// This is expected behavior when using `Task.cancel()` or `interrupt()`.
     case cancelled
 }
 
